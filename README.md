@@ -8,7 +8,16 @@ CyberVector treats cyber intrusions as controlled exposure events, applying a co
 # 📊 Live Runtime Containment Data
 
 <!-- CVX-REPORT-START -->
-Daily runtime data will populate here automatically.
+### 📅 2026-03-02
+
+| Metric | Value |
+|--------|--------|
+| Failed SSH Attempts | 0 |
+| Listening Ports | 4 |
+| Running Services | 24 |
+| Risk Level | 🟢 Normal |
+
+_Last updated automatically via GitHub Actions._
 <!-- CVX-REPORT-END -->
 
 ---
