@@ -14,7 +14,7 @@ CyberVector treats cyber intrusions as controlled exposure events, applying a co
 |--------|--------|
 | Failed SSH Attempts | 0 |
 | Listening Ports | 4 |
-| Running Services | 24 |
+| Running Services | 25 |
 | Risk Level | 🟢 Normal |
 
 _Last updated automatically via GitHub Actions._
