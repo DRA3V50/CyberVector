@@ -1,15 +1,29 @@
-echo ""
-echo "Running Services:" >> $OUTPUT
-systemctl list-units --type=service --state=running >> $OUTPUT
+#!/bin/bash
 
-echo ""
-echo "SUID Files:" >> $OUTPUT
-find / -perm -4000 2>/dev/null >> $OUTPUT
+mkdir -p artifacts/system
 
-echo ""
-echo "Cron Jobs:" >> $OUTPUT
-ls -la /etc/cron* >> $OUTPUT 2>/dev/null
+OUTPUT="artifacts/system/system_$(date +%F).log"
 
-echo ""
-echo "SSH Configuration Snippet:" >> $OUTPUT
-grep -E "PermitRootLogin|PasswordAuthentication" /etc/ssh/sshd_config 2>/dev/null >> $OUTPUT
+echo "[System Collection]" > "$OUTPUT"
+echo "Collection Time: $(date)" >> "$OUTPUT"
+echo "----------------------------" >> "$OUTPUT"
+
+echo "" >> "$OUTPUT"
+echo "Running Services:" >> "$OUTPUT"
+systemctl list-units --type=service --state=running 2>/dev/null >> "$OUTPUT"
+
+echo "" >> "$OUTPUT"
+echo "Installed Security Updates Available:" >> "$OUTPUT"
+apt list --upgradable 2>/dev/null | grep security >> "$OUTPUT"
+
+echo "" >> "$OUTPUT"
+echo "SUID Files:" >> "$OUTPUT"
+find / -perm -4000 2>/dev/null >> "$OUTPUT"
+
+echo "" >> "$OUTPUT"
+echo "Cron Jobs:" >> "$OUTPUT"
+ls -la /etc/cron* 2>/dev/null >> "$OUTPUT"
+
+echo "" >> "$OUTPUT"
+echo "SSH Configuration Snippet:" >> "$OUTPUT"
+grep -E "PermitRootLogin|PasswordAuthentication" /etc/ssh/sshd_config 2>/dev/null >> "$OUTPUT"
