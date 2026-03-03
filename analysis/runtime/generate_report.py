@@ -33,14 +33,14 @@ suid_count = read_metric(system_file, "SUID Binaries")
 risk_score = (failed_ssh * 3) + (listening_ports * 2) + (suid_count * 1.5)
 
 def determine_stage(score):
-    if score >= 300:
-        return "RED"
-    elif score >= 200:
-        return "ORANGE"
-    elif score >= 100:
-        return "YELLOW"
+    if risk_score < 40:
+    stage = "GREEN"
+    elif risk_score < 100:
+    stage = "YELLOW"
+    elif risk_score < 200:
+    stage = "ORANGE"
     else:
-        return "GREEN"
+    stage = "RED"
 
 current_stage = determine_stage(risk_score)
 
