@@ -18,7 +18,7 @@ CyberVector treats cyber intrusions as controlled exposure events, applying a co
 - Listening Ports: 4
 
 ### 🖥 System Surface
-- Running Services: 25
+- Running Services: 24
 - SUID Binaries: 16
 
 ### 🚨 Composite Risk
