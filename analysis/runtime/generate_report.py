@@ -33,14 +33,24 @@ suid_count = read_metric(system_file, "SUID Binaries")
 risk_score = (failed_ssh * 3) + (listening_ports * 2) + (suid_count * 1.5)
 
 def determine_stage(score):
-    if risk_score < 40:
+    if score < 40:
         stage = "GREEN"
-    elif risk_score < 100:
+    elif score < 100:
         stage = "YELLOW"
-    elif risk_score < 200:
+    elif score < 200:
         stage = "ORANGE"
     else:
         stage = "RED"
+    if stage == "GREEN":
+        status_msg = "Containment stable. No propagation detected."
+    elif stage == "YELLOW":
+        status_msg = "Anomalous activity increasing. Monitoring escalation."
+    elif stage == "ORANGE":
+        status_msg = "Sustained compromise indicators present. Containment at risk."
+    else:
+        status_msg = "Critical outbreak condition. Immediate intervention required."
+
+    return stage, status_msg
 
 current_stage = determine_stage(risk_score)
 
