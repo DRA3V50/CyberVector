@@ -7,26 +7,26 @@ CyberVector treats cyber intrusions as controlled exposure events, applying a co
 
 # 📊 Live Runtime Containment Data
 
+
 <!-- CVX-REPORT-START -->
-## 📊 CyberVector Operational Dashboard
+# 🕵️ CyberVector Containment Command
+
 **Date:** 2026-03-03
+**Containment Stage:** GREEN
+**Risk Score:** 32.0
 
-### 🔐 Authentication
+## 📊 Host Metrics
 - Failed SSH Attempts: 0
-
-### 🌐 Network Exposure
 - Listening Ports: 4
-
-### 🖥 System Surface
-- Running Services: 24
+- Running Services: 26
 - SUID Binaries: 16
 
-### 🚨 Composite Risk
-Score: 22.0
-Level: 🟢 Normal
+## 🧬 Containment Status
+Containment stable. No propagation detected.
 
----
-_Last updated automatically_
+
+
 <!-- CVX-REPORT-END -->
+
 
 ---
