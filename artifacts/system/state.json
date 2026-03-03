@@ -1,11 +1,11 @@
 {
   "date": "2026-03-03",
-  "stage": "GREEN",
-  "risk_score": 32.0,
+  "stage": "RED",
+  "risk_score": 320.0,
   "metrics": {
-    "failed_ssh": 0,
-    "listening_ports": 4,
-    "running_services": 24,
-    "suid_count": 16
+    "failed_ssh": 60,
+    "listening_ports": 25,
+    "running_services": 80,
+    "suid_count": 60
   }
 }
