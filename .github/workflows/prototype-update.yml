@@ -35,19 +35,18 @@ jobs:
         run: bash analysis/runtime/collect_system.sh
 
       # -----------------------------
+      # 🔥 PHASE I.5 – Stress Test Injection (Temporary)
+      # -----------------------------
+
+      - name: Simulate Outbreak (Stress Test)
+        run: bash simulations/outbreak_simulator.sh
+
+      # -----------------------------
       # Phase II – Tooling Layer
       # -----------------------------
 
       - name: Run Patch Audit
         run: bash tools/patch_audit.sh
-
-      # NOTE:
-      # exposure_snapshot.sh is interactive and prints to stdout.
-      # It does not generate artifacts.
-      # Keeping it out of automation prevents unnecessary noise.
-
-      # log_parser.py is a manual investigation tool.
-      # Removing from workflow to prevent argument failure.
 
       # -----------------------------
       # Phase III – Generate README Dashboard
