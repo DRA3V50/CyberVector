@@ -1,27 +1,14 @@
 #!/bin/bash
 
-OUTPUT="patch-management/ubuntu-security-update-log.md"
+mkdir -p artifacts/system
 
-echo "# Patch Intelligence Report" > $OUTPUT
-echo "Generated on: $(date)" >> $OUTPUT
-echo "" >> $OUTPUT
+DATE=$(date +%F)
+OUTPUT="artifacts/system/patch_audit_${DATE}.log"
 
-UPDATES=$(apt list --upgradable 2>/dev/null)
+OUTDATED=$(apt list --upgradable 2>/dev/null | grep -v "Listing..." | wc -l)
 
-echo "## Pending Updates" >> $OUTPUT
-echo "$UPDATES" >> $OUTPUT
-echo "" >> $OUTPUT
-
-echo "## Kernel Version" >> $OUTPUT
-uname -r >> $OUTPUT
-echo "" >> $OUTPUT
-
-echo "## Exploitability Analysis" >> $OUTPUT
-
-if echo "$UPDATES" | grep -q openssh; then
-    echo "- OpenSSH update pending. Remote compromise risk elevated." >> $OUTPUT
-fi
-
-if echo "$UPDATES" | grep -q sudo; then
-    echo "- Sudo update pending. Privilege escalation risk present." >> $OUTPUT
-fi
+{
+echo "[Patch Audit]"
+echo "Date: ${DATE}"
+echo "Upgradable Packages: ${OUTDATED}"
+} > "$OUTPUT"
