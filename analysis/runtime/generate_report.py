@@ -20,6 +20,7 @@ def read_metric(file_path, key):
                 return int(line.split(":")[1].strip())
     return 0
 
+# === Collect today's metrics ===
 auth_file = f"{ARTIFACT_ROOT}/auth/auth_{TODAY}.log"
 network_file = f"{ARTIFACT_ROOT}/network/network_{TODAY}.log"
 system_file = f"{ARTIFACT_ROOT}/system/system_{TODAY}.log"
@@ -43,25 +44,41 @@ def determine_stage(score):
 
 current_stage = determine_stage(risk_score)
 
-previous_stage = None
+# === Load previous state ===
+previous_data = {}
 if os.path.exists(STATE_FILE):
     with open(STATE_FILE) as f:
-        previous_stage = json.load(f).get("stage")
+        previous_data = json.load(f)
 
-# Detect escalation
-escalation = False
-if previous_stage and previous_stage != current_stage:
-    escalation = True
+previous_stage = previous_data.get("stage")
+previous_metrics = previous_data.get("metrics", {})
 
-# Save current state
+def delta(current, previous):
+    return current - previous if previous else 0
+
+delta_ssh = delta(failed_ssh, previous_metrics.get("failed_ssh", 0))
+delta_ports = delta(listening_ports, previous_metrics.get("listening_ports", 0))
+delta_services = delta(running_services, previous_metrics.get("running_services", 0))
+delta_suid = delta(suid_count, previous_metrics.get("suid_count", 0))
+
+# === Escalation detection ===
+escalation = previous_stage and previous_stage != current_stage
+
+# === Save current state ===
 with open(STATE_FILE, "w") as f:
     json.dump({
         "date": TODAY,
         "stage": current_stage,
-        "risk_score": risk_score
+        "risk_score": risk_score,
+        "metrics": {
+            "failed_ssh": failed_ssh,
+            "listening_ports": listening_ports,
+            "running_services": running_services,
+            "suid_count": suid_count
+        }
     }, f, indent=2)
 
-# Create incident if escalation
+# === Create incident if escalation ===
 incident_note = ""
 if escalation:
     incident_id = f"INC-{TODAY}"
@@ -74,8 +91,20 @@ if escalation:
             "new_stage": current_stage,
             "risk_score": risk_score
         }, f, indent=2)
-    incident_note = f"\n🚨 Incident Created: {incident_id}\n"
+    incident_note = f"\n🚨 STAGE ESCALATION DETECTED: {previous_stage} → {current_stage}\n"
 
+# === Incident listing ===
+incident_files = sorted(Path(INCIDENT_DIR).glob("INC-*.json"))
+incident_list = ""
+for file in incident_files:
+    with open(file) as f:
+        data = json.load(f)
+        incident_list += f"- {data['incident_id']} ({data['previous_stage']} → {data['new_stage']})\n"
+
+if not incident_list:
+    incident_list = "No active incidents.\n"
+
+# === Stage narratives ===
 stage_narrative = {
     "GREEN": "Containment stable. No propagation detected.",
     "YELLOW": "Elevated activity detected. Monitoring escalation vectors.",
@@ -83,24 +112,35 @@ stage_narrative = {
     "RED": "Critical outbreak condition. Immediate intervention required."
 }
 
+def fmt_delta(value):
+    if value > 0:
+        return f" (+{value})"
+    elif value < 0:
+        return f" ({value})"
+    else:
+        return ""
+
 dashboard = f"""
 <!-- CVX-REPORT-START -->
 # 🕵️ CyberVector Containment Command
 
-**Date:** {TODAY}
-**Containment Stage:** {current_stage}
+**Date:** {TODAY}  
+**Containment Stage:** {current_stage}  
 **Risk Score:** {risk_score}
 
+{incident_note}
+
 ## 📊 Host Metrics
-- Failed SSH Attempts: {failed_ssh}
-- Listening Ports: {listening_ports}
-- Running Services: {running_services}
-- SUID Binaries: {suid_count}
+- Failed SSH Attempts: {failed_ssh}{fmt_delta(delta_ssh)}
+- Listening Ports: {listening_ports}{fmt_delta(delta_ports)}
+- Running Services: {running_services}{fmt_delta(delta_services)}
+- SUID Binaries: {suid_count}{fmt_delta(delta_suid)}
 
 ## 🧬 Containment Status
 {stage_narrative[current_stage]}
 
-{incident_note}
+## 📂 Incident Log
+{incident_list}
 
 <!-- CVX-REPORT-END -->
 """
