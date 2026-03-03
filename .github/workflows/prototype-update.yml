@@ -38,14 +38,16 @@ jobs:
       # Phase II – Tooling Layer
       # -----------------------------
 
-      - name: Run patch audit
+      - name: Run Patch Audit
         run: bash tools/patch_audit.sh
 
-      - name: Run exposure snapshot
-        run: bash tools/exposure_snapshot.sh
+      # NOTE:
+      # exposure_snapshot.sh is interactive and prints to stdout.
+      # It does not generate artifacts.
+      # Keeping it out of automation prevents unnecessary noise.
 
-      - name: Run auth log parser
-        run: python tools/log_parser.py
+      # log_parser.py is a manual investigation tool.
+      # Removing from workflow to prevent argument failure.
 
       # -----------------------------
       # Phase III – Generate README Dashboard
