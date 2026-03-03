@@ -35,13 +35,6 @@ jobs:
         run: bash analysis/runtime/collect_system.sh
 
       # -----------------------------
-      # 🔥 PHASE I.5 – Stress Test Injection (Temporary)
-      # -----------------------------
-
-      - name: Simulate Outbreak (Stress Test)
-        run: bash simulations/outbreak_simulator.sh
-
-      # -----------------------------
       # Phase II – Tooling Layer
       # -----------------------------
 
