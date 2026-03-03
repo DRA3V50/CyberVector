@@ -8,16 +8,25 @@ CyberVector treats cyber intrusions as controlled exposure events, applying a co
 # 📊 Live Runtime Containment Data
 
 <!-- CVX-REPORT-START -->
-### 📅 2026-03-02
+## 📊 CyberVector Operational Dashboard
+**Date:** 2026-03-03
 
-| Metric | Value |
-|--------|--------|
-| Failed SSH Attempts | 0 |
-| Listening Ports | 4 |
-| Running Services | 24 |
-| Risk Level | 🟢 Normal |
+### 🔐 Authentication
+- Failed SSH Attempts: 0
 
-_Last updated automatically via GitHub Actions._
+### 🌐 Network Exposure
+- Listening Ports: 4
+
+### 🖥 System Surface
+- Running Services: 25
+- SUID Binaries: 16
+
+### 🚨 Composite Risk
+Score: 22.0
+Level: 🟢 Normal
+
+---
+_Last updated automatically_
 <!-- CVX-REPORT-END -->
 
 ---
