@@ -34,13 +34,13 @@ risk_score = (failed_ssh * 3) + (listening_ports * 2) + (suid_count * 1.5)
 
 def determine_stage(score):
     if risk_score < 40:
-    stage = "GREEN"
+        stage = "GREEN"
     elif risk_score < 100:
-    stage = "YELLOW"
+        stage = "YELLOW"
     elif risk_score < 200:
-    stage = "ORANGE"
+        stage = "ORANGE"
     else:
-    stage = "RED"
+        stage = "RED"
 
 current_stage = determine_stage(risk_score)
 
