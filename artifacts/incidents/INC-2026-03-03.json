@@ -1,7 +1,7 @@
 {
   "incident_id": "INC-2026-03-03",
   "date": "2026-03-03",
-  "previous_stage": "GREEN",
-  "new_stage": "RED",
-  "risk_score": 320.0
+  "previous_stage": "RED",
+  "new_stage": "GREEN",
+  "risk_score": 32.0
 }
