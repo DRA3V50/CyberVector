@@ -30,8 +30,10 @@ listening_ports = read_metric(network_file, "Listening Ports")
 running_services = read_metric(system_file, "Running Services")
 suid_count = read_metric(system_file, "SUID Binaries")
 
+# Risk calculation
 risk_score = (failed_ssh * 3) + (listening_ports * 2) + (suid_count * 1.5)
 
+# === Stage Engine ===
 def determine_stage(score):
     if score < 40:
         stage = "GREEN"
@@ -53,7 +55,8 @@ def determine_stage(score):
 
     return stage, status_msg
 
-current_stage = determine_stage(risk_score)
+# ✅ Proper unpacking
+current_stage, status_msg = determine_stage(risk_score)
 
 # === Load previous state ===
 previous_data = {}
@@ -102,11 +105,13 @@ if escalation:
             "new_stage": current_stage,
             "risk_score": risk_score
         }, f, indent=2)
+
     incident_note = f"\n🚨 STAGE ESCALATION DETECTED: {previous_stage} → {current_stage}\n"
 
 # === Incident listing ===
 incident_files = sorted(Path(INCIDENT_DIR).glob("INC-*.json"))
 incident_list = ""
+
 for file in incident_files:
     with open(file) as f:
         data = json.load(f)
@@ -114,14 +119,6 @@ for file in incident_files:
 
 if not incident_list:
     incident_list = "No active incidents.\n"
-
-# === Stage narratives ===
-stage_narrative = {
-    "GREEN": "Containment stable. No propagation detected.",
-    "YELLOW": "Elevated activity detected. Monitoring escalation vectors.",
-    "ORANGE": "Active containment required. Exposure surface expanding.",
-    "RED": "Critical outbreak condition. Immediate intervention required."
-}
 
 def fmt_delta(value):
     if value > 0:
@@ -131,6 +128,7 @@ def fmt_delta(value):
     else:
         return ""
 
+# === Dashboard Render ===
 dashboard = f"""
 <!-- CVX-REPORT-START -->
 # 🕵️ CyberVector Containment Command
@@ -148,14 +146,14 @@ dashboard = f"""
 - SUID Binaries: {suid_count}{fmt_delta(delta_suid)}
 
 ## 🧬 Containment Status
-{stage_narrative[current_stage]}
+{status_msg}
 
 ## 📂 Incident Log
 {incident_list}
-
 <!-- CVX-REPORT-END -->
 """
 
+# === Inject into README ===
 with open("README.md", "r") as f:
     content = f.read()
 
