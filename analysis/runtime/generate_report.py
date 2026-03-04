@@ -82,12 +82,25 @@ delta_suid = delta(suid_count, previous_metrics.get("suid_count", 0))
 # === Escalation Detection ===
 escalation = previous_stage and previous_stage != current_stage
 
+# === Maintain Rolling Risk History ===
+risk_history = previous_data.get("risk_history", [])
+
+risk_history.append({
+    "date": TODAY,
+    "risk": risk_score,
+    "stage": current_stage
+})
+
+# Keep only last 14 entries
+risk_history = risk_history[-14:]
+
 # === Save Current State ===
 with open(STATE_FILE, "w") as f:
     json.dump({
         "date": TODAY,
         "stage": current_stage,
         "risk_score": risk_score,
+        "risk_history": risk_history,
         "metrics": {
             "failed_ssh": failed_ssh,
             "listening_ports": listening_ports,
@@ -134,6 +147,9 @@ def fmt_delta(value):
         return ""
 
 # === Dashboard Render ===
+trend_output = ""
+for entry in risk_history:
+    trend_output += f"- {entry['date']} → {entry['risk']} ({entry['stage']})\n"
 dashboard = f"""
 <!-- CVX-REPORT-START -->
 # 🕵️ CyberVector Containment Command
