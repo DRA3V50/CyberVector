@@ -41,6 +41,7 @@ def determine_stage(score):
         stage = "ORANGE"
     else:
         stage = "RED"
+
     if stage == "GREEN":
         status_msg = "Containment stable. No propagation detected."
     elif stage == "YELLOW":
