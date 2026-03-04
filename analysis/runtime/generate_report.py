@@ -30,7 +30,7 @@ listening_ports = read_metric(network_file, "Listening Ports")
 running_services = read_metric(system_file, "Running Services")
 suid_count = read_metric(system_file, "SUID Binaries")
 
-# === Base Risk Calculation (Daily Input) ===
+# === Base Risk Calculation ===
 base_risk = (failed_ssh * 3) + (listening_ports * 2) + (suid_count * 1.5)
 
 # === Load Previous State ===
@@ -43,7 +43,7 @@ previous_stage = previous_data.get("stage")
 previous_metrics = previous_data.get("metrics", {})
 previous_risk = previous_data.get("risk_score", 0)
 
-# === Momentum Risk Blending (Infection Memory) ===
+# === Momentum Risk Blending ===
 risk_score = (previous_risk * 0.6) + (base_risk * 0.4)
 risk_score = round(risk_score, 1)
 
@@ -91,7 +91,6 @@ risk_history.append({
     "stage": current_stage
 })
 
-# Keep only last 14 entries
 risk_history = risk_history[-14:]
 
 # === Save Current State ===
@@ -138,6 +137,11 @@ for file in incident_files:
 if not incident_list:
     incident_list = "No active incidents.\n"
 
+# === Build Trend Output ===
+trend_output = ""
+for entry in risk_history:
+    trend_output += f"- {entry['date']} → {entry['risk']} ({entry['stage']})\n"
+
 def fmt_delta(value):
     if value > 0:
         return f" (+{value})"
@@ -147,9 +151,6 @@ def fmt_delta(value):
         return ""
 
 # === Dashboard Render ===
-trend_output = ""
-for entry in risk_history:
-    trend_output += f"- {entry['date']} → {entry['risk']} ({entry['stage']})\n"
 dashboard = f"""
 <!-- CVX-REPORT-START -->
 # 🕵️ CyberVector Containment Command
@@ -168,6 +169,9 @@ dashboard = f"""
 
 ## 🧬 Containment Status
 {status_msg}
+
+## 📈 14-Day Risk Trend
+{trend_output}
 
 ## 📂 Incident Log
 {incident_list}
