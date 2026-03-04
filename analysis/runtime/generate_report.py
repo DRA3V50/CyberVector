@@ -30,8 +30,22 @@ listening_ports = read_metric(network_file, "Listening Ports")
 running_services = read_metric(system_file, "Running Services")
 suid_count = read_metric(system_file, "SUID Binaries")
 
-# Risk calculation
-risk_score = (failed_ssh * 3) + (listening_ports * 2) + (suid_count * 1.5)
+# === Base Risk Calculation (Daily Input) ===
+base_risk = (failed_ssh * 3) + (listening_ports * 2) + (suid_count * 1.5)
+
+# === Load Previous State ===
+previous_data = {}
+if os.path.exists(STATE_FILE):
+    with open(STATE_FILE) as f:
+        previous_data = json.load(f)
+
+previous_stage = previous_data.get("stage")
+previous_metrics = previous_data.get("metrics", {})
+previous_risk = previous_data.get("risk_score", 0)
+
+# === Momentum Risk Blending (Infection Memory) ===
+risk_score = (previous_risk * 0.6) + (base_risk * 0.4)
+risk_score = round(risk_score, 1)
 
 # === Stage Engine ===
 def determine_stage(score):
@@ -55,17 +69,7 @@ def determine_stage(score):
 
     return stage, status_msg
 
-# ✅ Proper unpacking
 current_stage, status_msg = determine_stage(risk_score)
-
-# === Load previous state ===
-previous_data = {}
-if os.path.exists(STATE_FILE):
-    with open(STATE_FILE) as f:
-        previous_data = json.load(f)
-
-previous_stage = previous_data.get("stage")
-previous_metrics = previous_data.get("metrics", {})
 
 def delta(current, previous):
     return current - previous if previous else 0
@@ -75,10 +79,10 @@ delta_ports = delta(listening_ports, previous_metrics.get("listening_ports", 0))
 delta_services = delta(running_services, previous_metrics.get("running_services", 0))
 delta_suid = delta(suid_count, previous_metrics.get("suid_count", 0))
 
-# === Escalation detection ===
+# === Escalation Detection ===
 escalation = previous_stage and previous_stage != current_stage
 
-# === Save current state ===
+# === Save Current State ===
 with open(STATE_FILE, "w") as f:
     json.dump({
         "date": TODAY,
@@ -92,11 +96,12 @@ with open(STATE_FILE, "w") as f:
         }
     }, f, indent=2)
 
-# === Create incident if escalation ===
+# === Create Incident if Stage Changed ===
 incident_note = ""
 if escalation:
     incident_id = f"INC-{TODAY}"
     incident_path = f"{INCIDENT_DIR}/{incident_id}.json"
+
     with open(incident_path, "w") as f:
         json.dump({
             "incident_id": incident_id,
@@ -108,7 +113,7 @@ if escalation:
 
     incident_note = f"\n🚨 STAGE ESCALATION DETECTED: {previous_stage} → {current_stage}\n"
 
-# === Incident listing ===
+# === Incident Listing ===
 incident_files = sorted(Path(INCIDENT_DIR).glob("INC-*.json"))
 incident_list = ""
 
@@ -153,7 +158,7 @@ dashboard = f"""
 <!-- CVX-REPORT-END -->
 """
 
-# === Inject into README ===
+# === Inject Into README ===
 with open("README.md", "r") as f:
     content = f.read()
 
