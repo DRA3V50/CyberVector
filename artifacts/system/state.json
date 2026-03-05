@@ -12,6 +12,11 @@
       "date": "2026-03-05",
       "risk": 32.0,
       "stage": "GREEN"
+    },
+    {
+      "date": "2026-03-05",
+      "risk": 32.0,
+      "stage": "GREEN"
     }
   ],
   "metrics": {
