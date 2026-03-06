@@ -150,6 +150,31 @@ Potential Lateral Movement Paths: {lateral_paths}
 Exposure Surface: {exposure_surface}
 """
 
+# === Containment Recommendation Engine ===
+recommendations = []
+
+if failed_ssh > 10:
+    recommendations.append("Restrict SSH authentication attempts (fail2ban recommended)")
+
+if listening_ports > 10:
+    recommendations.append("Audit exposed ports and close unnecessary services")
+
+if suid_count > 30:
+    recommendations.append("Review SUID binaries for privilege escalation risks")
+
+if running_services > 50:
+    recommendations.append("Investigate excessive running services")
+
+if infection_probability == "HIGH":
+    recommendations.append("Consider host isolation or segmentation")
+
+if not recommendations:
+    recommendations.append("No containment actions required.")
+
+containment_output = ""
+for r in recommendations:
+    containment_output += f"- {r}\n"
+
 # === Save Threat Record ===
 if threats:
 
@@ -367,19 +392,18 @@ dashboard = f"""
 
 ## 🧬 Containment Status
 {status_msg}
-
 ## 🧠 Threat Intelligence
 {threat_output}
-
 ## 🔎 Indicators of Compromise (IOC)
 {len(ioc_records)} indicators generated today.
-
 ## 📈 14-Day Risk Trend
 {trend_output}
 ## 🎯 Campaign Intelligence
 {campaign_alert if campaign_alert else "No active campaigns detected."}
 ## 🦠 Propagation Simulation
 {propagation_output}
+## 🛡️ Containment Recommendations
+{containment_output}
 ## 📂 Incident Log
 {incident_list}
 <!-- CVX-REPORT-END -->
