@@ -138,7 +138,39 @@ if threats:
 
 # === Maintain Rolling Risk History ===
 risk_history = previous_data.get("risk_history", [])
+# === Campaign Detection Engine ===
+CAMPAIGN_DIR = f"{ARTIFACT_ROOT}/campaigns"
+os.makedirs(CAMPAIGN_DIR, exist_ok=True)
 
+campaign_alert = ""
+
+# Detect multi-day escalation patterns
+if len(risk_history) >= 3:
+
+    last3 = risk_history[-3:]
+
+    r1 = last3[0]["risk"]
+    r2 = last3[1]["risk"]
+    r3 = last3[2]["risk"]
+
+    if r1 < r2 < r3 and r3 >= 80:
+
+        campaign_id = f"CVX-CAM-{TODAY}"
+        campaign_file = f"{CAMPAIGN_DIR}/{campaign_id}.json"
+
+        campaign_data = {
+            "campaign_id": campaign_id,
+            "type": "Escalating Intrusion Pattern",
+            "start_date": last3[0]["date"],
+            "end_date": TODAY,
+            "risk_progression": [r1, r2, r3],
+            "final_stage": current_stage
+        }
+
+        with open(campaign_file, "w") as f:
+            json.dump(campaign_data, f, indent=2)
+
+        campaign_alert = f"🚨 Attack campaign detected ({campaign_id})"
 # Prevent duplicate same-day entries
 if not risk_history or risk_history[-1]["date"] != TODAY:
 
