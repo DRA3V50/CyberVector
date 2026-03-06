@@ -114,12 +114,13 @@ escalation = previous_stage and previous_stage != current_stage
 # === Maintain Rolling Risk History ===
 risk_history = previous_data.get("risk_history", [])
 
-risk_history.append({
-    "date": TODAY,
-    "risk": risk_score,
-    "stage": current_stage
-})
-
+# Prevent duplicate same-day entries
+if not risk_history or risk_history[-1]["date"] != TODAY:
+    risk_history.append({
+        "date": TODAY,
+        "risk": risk_score,
+        "stage": current_stage
+    })
 risk_history = risk_history[-14:]
 
 # === Save Current State ===
