@@ -175,6 +175,31 @@ containment_output = ""
 for r in recommendations:
     containment_output += f"- {r}\n"
 
+# === Adversary Behavior Classification ===
+behaviors = []
+
+if failed_ssh > 20:
+    behaviors.append("Credential Access Activity (SSH brute force pattern)")
+
+if suid_count > 30:
+    behaviors.append("Privilege Escalation Activity (abnormal SUID surface)")
+
+if running_services > 60:
+    behaviors.append("Persistence Activity (service density anomaly)")
+
+if listening_ports > 15:
+    behaviors.append("Command and Control Exposure (network surface expansion)")
+
+if infection_probability == "HIGH":
+    behaviors.append("Lateral Movement Risk (high propagation probability)")
+
+if not behaviors:
+    behaviors.append("No adversary behavior patterns detected.")
+
+behavior_output = ""
+for b in behaviors:
+    behavior_output += f"- {b}\n"
+
 # === Save Threat Record ===
 if threats:
 
@@ -404,6 +429,8 @@ dashboard = f"""
 {propagation_output}
 ## 🛡️ Containment Recommendations
 {containment_output}
+## 📝 Adversary Behavior Profile
+{behavior_output}
 ## 📂 Incident Log
 {incident_list}
 <!-- CVX-REPORT-END -->
