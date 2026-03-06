@@ -36,6 +36,8 @@ Containment stable. No propagation detected.
 ## 🧠 Threat Intelligence
 No active threat signatures detected.
 
+## 🔎 Indicators of Compromise (IOC)
+{len(ioc_records)} indicators generated today.
 
 ## 📈 14-Day Risk Trend
 - 2026-03-04 → 32.0 (GREEN)
