@@ -309,6 +309,9 @@ dashboard = f"""
 ## 🧠 Threat Intelligence
 {threat_output}
 
+## 🔎 Indicators of Compromise (IOC)
+{len(ioc_records)} indicators generated today.
+
 ## 📈 14-Day Risk Trend
 {trend_output}
 
