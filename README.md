@@ -31,6 +31,9 @@ CyberVector treats cyber intrusions as controlled exposure events, applying a co
 ## 🧬 Containment Status
 Containment stable. No propagation detected.
 
+## 🧠 Threat Intelligence
+{threat_output}
+
 ## 📈 14-Day Risk Trend
 - 2026-03-04 → 32.0 (GREEN)
 - 2026-03-05 → 32.0 (GREEN)
