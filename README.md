@@ -22,6 +22,7 @@ CyberVector treats cyber intrusions as controlled exposure events, applying a co
 
 
 
+
 <!-- CVX-REPORT-START -->
 # 🕵️ CyberVector Containment Command
 
@@ -34,7 +35,7 @@ CyberVector treats cyber intrusions as controlled exposure events, applying a co
 ## 📊 Host Metrics
 - Failed SSH Attempts: 0
 - Listening Ports: 4
-- Running Services: 26 (+2)
+- Running Services: 24 (-2)
 - SUID Binaries: 16
 
 ## 🧬 Containment Status
@@ -60,10 +61,14 @@ Exposure Surface: MINIMAL
 ## 🛡️ Containment Recommendations
 - No containment actions required.
 
+## 📝 Adversary Behavior Profile
+- No adversary behavior patterns detected.
+
 ## 📂 Incident Log
 - INC-2026-03-03 (RED → GREEN)
 
 <!-- CVX-REPORT-END -->
+
 
 
 
