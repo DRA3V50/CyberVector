@@ -79,6 +79,35 @@ delta_ports = delta(listening_ports, previous_metrics.get("listening_ports", 0))
 delta_services = delta(running_services, previous_metrics.get("running_services", 0))
 delta_suid = delta(suid_count, previous_metrics.get("suid_count", 0))
 
+# === Threat Intelligence Engine ===
+threats = []
+
+if failed_ssh >= 20:
+    threats.append("Brute Force Pattern Detected")
+
+if listening_ports >= 15:
+    threats.append("Service Exposure Increasing")
+
+if suid_count >= 40:
+    threats.append("Privilege Escalation Surface High")
+
+if running_services >= 70:
+    threats.append("Abnormal Service Density")
+
+# Save threat record if any detected
+if threats:
+    threat_record = {
+        "date": TODAY,
+        "stage": current_stage,
+        "risk": risk_score,
+        "threats": threats
+    }
+
+    threat_file = f"{ARTIFACT_ROOT}/threats/threat_{TODAY}.json"
+
+    with open(threat_file, "w") as f:
+        json.dump(threat_record, f, indent=2)
+
 # === Escalation Detection ===
 escalation = previous_stage and previous_stage != current_stage
 
