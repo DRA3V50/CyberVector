@@ -45,7 +45,6 @@ No active threat signatures detected.
 ## 📈 14-Day Risk Trend
 - 2026-03-04 → 32.0 (GREEN)
 - 2026-03-05 → 32.0 (GREEN)
-- 2026-03-05 → 32.0 (GREEN)
 - 2026-03-06 → 32.0 (GREEN)
 
 
