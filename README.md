@@ -20,6 +20,7 @@ CyberVector treats cyber intrusions as controlled exposure events, applying a co
 
 
 
+
 <!-- CVX-REPORT-START -->
 # 🕵️ CyberVector Containment Command
 
@@ -52,10 +53,17 @@ No active threat signatures detected.
 
 ## 🎯 Campaign Intelligence
 No active campaigns detected.
+## 🦠 Propagation Simulation
+
+Host Infection Probability: LOW
+Potential Lateral Movement Paths: 1
+Exposure Surface: MINIMAL
+
 ## 📂 Incident Log
 - INC-2026-03-03 (RED → GREEN)
 
 <!-- CVX-REPORT-END -->
+
 
 
 
