@@ -119,6 +119,36 @@ if suid_count > 40:
 if running_services > 70:
     threats.append("⚠️ Excessive running services detected")
 
+# === Propagation Simulation Engine ===
+
+infection_score = (
+    (listening_ports * 2) +
+    (running_services * 0.5) +
+    (suid_count * 1.2) +
+    (failed_ssh * 1.5)
+)
+
+if infection_score < 50:
+    infection_probability = "LOW"
+elif infection_score < 120:
+    infection_probability = "MODERATE"
+else:
+    infection_probability = "HIGH"
+
+lateral_paths = int((listening_ports + running_services) / 20)
+
+if lateral_paths < 2:
+    exposure_surface = "MINIMAL"
+elif lateral_paths < 5:
+    exposure_surface = "MODERATE"
+else:
+    exposure_surface = "WIDE"
+
+propagation_output = f"""
+Host Infection Probability: {infection_probability}
+Potential Lateral Movement Paths: {lateral_paths}
+Exposure Surface: {exposure_surface}
+"""
 
 # === Save Threat Record ===
 if threats:
@@ -348,6 +378,8 @@ dashboard = f"""
 {trend_output}
 ## 🎯 Campaign Intelligence
 {campaign_alert if campaign_alert else "No active campaigns detected."}
+## 🦠 Propagation Simulation
+{propagation_output}
 ## 📂 Incident Log
 {incident_list}
 <!-- CVX-REPORT-END -->
