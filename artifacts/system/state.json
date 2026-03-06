@@ -22,7 +22,7 @@
   "metrics": {
     "failed_ssh": 0,
     "listening_ports": 4,
-    "running_services": 24,
+    "running_services": 26,
     "suid_count": 16
   }
 }
