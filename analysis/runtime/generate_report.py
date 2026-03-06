@@ -212,6 +212,53 @@ for entry in risk_history:
 
     trend_output += f"- {entry['date']} → {entry['risk']} ({entry['stage']})\n"
 
+# === IOC Generation Engine ===
+
+ioc_records = []
+
+if failed_ssh >= 20:
+    ioc_records.append({
+        "type": "Brute Force Indicator",
+        "source": "SSH Authentication",
+        "confidence": "Medium"
+    })
+
+if listening_ports >= 15:
+    ioc_records.append({
+        "type": "Exposure Indicator",
+        "source": "Network Surface Expansion",
+        "confidence": "Low"
+    })
+
+if suid_count >= 40:
+    ioc_records.append({
+        "type": "Privilege Escalation Indicator",
+        "source": "SUID Binary Surface",
+        "confidence": "High"
+    })
+
+if running_services >= 70:
+    ioc_records.append({
+        "type": "Persistence Indicator",
+        "source": "Service Density",
+        "confidence": "Medium"
+    })
+
+# Save IOC intelligence if indicators exist
+if ioc_records:
+    ioc_data = {
+        "date": TODAY,
+        "stage": current_stage,
+        "risk_score": risk_score,
+        "indicators": ioc_records
+    }
+
+    os.makedirs(f"{ARTIFACT_ROOT}/ioc", exist_ok=True)
+
+    ioc_file = f"{ARTIFACT_ROOT}/ioc/ioc_{TODAY}.json"
+
+    with open(ioc_file, "w") as f:
+        json.dump(ioc_data, f, indent=2)
 
 # === Threat Output ===
 if threats:
