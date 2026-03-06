@@ -346,7 +346,8 @@ dashboard = f"""
 
 ## 📈 14-Day Risk Trend
 {trend_output}
-
+## 🎯 Campaign Intelligence
+{campaign_alert if campaign_alert else "No active campaigns detected."}
 ## 📂 Incident Log
 {incident_list}
 <!-- CVX-REPORT-END -->
