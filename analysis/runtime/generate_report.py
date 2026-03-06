@@ -109,7 +109,20 @@ if threats:
         json.dump(threat_record, f, indent=2)
 
 # === Escalation Detection ===
-escalation = previous_stage and previous_stage != current_stage
+# === Threat Intelligence Engine ===
+threats = []
+
+if failed_ssh > 25:
+    threats.append("⚠️ Possible SSH brute force activity")
+
+if listening_ports > 20:
+    threats.append("⚠️ Abnormally high number of open ports")
+
+if suid_count > 40:
+    threats.append("⚠️ Privilege escalation surface unusually large")
+
+if running_services > 70:
+    threats.append("⚠️ Excessive running services detected")
 
 # === Maintain Rolling Risk History ===
 risk_history = previous_data.get("risk_history", [])
