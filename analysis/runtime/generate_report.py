@@ -179,6 +179,15 @@ def fmt_delta(value):
     else:
         return ""
 
+# === Threat Output ===
+threat_output = ""
+
+if threats:
+    for t in threats:
+        threat_output += f"- {t}\n"
+else:
+    threat_output = "No active threat signatures detected.\n"
+
 # === Dashboard Render ===
 dashboard = f"""
 <!-- CVX-REPORT-START -->
