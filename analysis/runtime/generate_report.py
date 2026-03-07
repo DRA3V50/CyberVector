@@ -23,6 +23,42 @@ def read_metric(file_path, key):
                 return int(line.split(":")[1].strip())
     return 0
 
+# === IOC Generation Engine ===
+
+IOC_DIR = f"{ARTIFACT_ROOT}/ioc"
+os.makedirs(IOC_DIR, exist_ok=True)
+
+ioc_list = []
+
+# SSH brute force indicator
+if failed_ssh > 20:
+    indicator = f"{TODAY} | Credential Attack Pattern | SSH failures: {failed_ssh}"
+    ioc_list.append(indicator)
+
+# suspicious port exposure
+if listening_ports > 15:
+    indicator = f"{TODAY} | Network Exposure | Listening ports: {listening_ports}"
+    ioc_list.append(indicator)
+
+# privilege escalation surface
+if suid_count > 30:
+    indicator = f"{TODAY} | Privilege Escalation Surface | SUID binaries: {suid_count}"
+    ioc_list.append(indicator)
+
+# abnormal service density
+if running_services > 60:
+    indicator = f"{TODAY} | Persistence Indicator | Services running: {running_services}"
+    ioc_list.append(indicator)
+
+
+IOC_FILE = f"{IOC_DIR}/ioc_{TODAY}.txt"
+
+if ioc_list:
+    with open(IOC_FILE, "w") as f:
+        for ioc in ioc_list:
+            f.write(ioc + "\n")
+
+ioc_count = len(ioc_list)
 
 # === Collect today's metrics ===
 auth_file = f"{ARTIFACT_ROOT}/auth/auth_{TODAY}.log"
@@ -347,6 +383,9 @@ Exposure Index: {exposure_index}
 
 ## 🧠 Threat Intelligence
 {chr(10).join(f"- {t}" for t in threats) if threats else "No active threat signatures detected."}
+
+## 🔎 Indicators of Compromise (IOC)
+{ioc_count} indicators generated today.
 
 ## 🦠 Propagation Simulation
 {propagation_output}
