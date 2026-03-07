@@ -56,6 +56,10 @@ risk_score = (previous_risk * 0.6) + (base_risk * 0.4)
 risk_score = round(risk_score, 1)
 
 
+# === Exposure Index (Bio-response terminology) ===
+exposure_index = round(risk_score * 1.15, 1)
+
+
 # === Stage Engine ===
 def determine_stage(score):
 
@@ -89,6 +93,20 @@ def determine_stage(score):
 current_stage, status_msg = determine_stage(risk_score)
 
 
+# === Outbreak Classification ===
+if risk_score < 40:
+    outbreak_class = "Baseline Activity"
+
+elif risk_score < 100:
+    outbreak_class = "Elevated Host Exposure"
+
+elif risk_score < 200:
+    outbreak_class = "Active Intrusion Environment"
+
+else:
+    outbreak_class = "Critical Compromise Condition"
+
+
 # === Metric Delta Tracking ===
 def delta(current, previous):
     return current - previous if previous else 0
@@ -108,19 +126,19 @@ escalation = previous_stage and previous_stage != current_stage
 threats = []
 
 if failed_ssh > 25:
-    threats.append("⚠️ Possible SSH brute force activity")
+    threats.append("[HIGH] SSH brute force activity suspected")
 
 if listening_ports > 20:
-    threats.append("⚠️ Abnormally high number of open ports")
+    threats.append("[MEDIUM] Unusual number of exposed network ports")
 
 if suid_count > 40:
-    threats.append("⚠️ Privilege escalation surface unusually large")
+    threats.append("[HIGH] Elevated privilege escalation surface")
 
 if running_services > 70:
-    threats.append("⚠️ Excessive running services detected")
+    threats.append("[MEDIUM] Abnormally dense service environment")
+
 
 # === Propagation Simulation Engine ===
-
 infection_score = (
     (listening_ports * 2) +
     (running_services * 0.5) +
@@ -150,6 +168,7 @@ Potential Lateral Movement Paths: {lateral_paths}
 Exposure Surface: {exposure_surface}
 """
 
+
 # === Containment Recommendation Engine ===
 recommendations = []
 
@@ -169,11 +188,12 @@ if infection_probability == "HIGH":
     recommendations.append("Consider host isolation or segmentation")
 
 if not recommendations:
-    recommendations.append("No containment actions required.")
+    recommendations.append("System operating within expected containment parameters.")
 
 containment_output = ""
 for r in recommendations:
     containment_output += f"- {r}\n"
+
 
 # === Adversary Behavior Classification ===
 behaviors = []
@@ -200,58 +220,23 @@ behavior_output = ""
 for b in behaviors:
     behavior_output += f"- {b}\n"
 
-# === Save Threat Record ===
-if threats:
 
-    threat_record = {
-        "date": TODAY,
-        "stage": current_stage,
-        "risk": risk_score,
-        "threats": threats
-    }
+# === Containment Advisory Bulletin ===
+advisory = ""
 
-    threat_file = f"{THREAT_DIR}/threat_{TODAY}.json"
+if current_stage in ["ORANGE", "RED"]:
+    advisory = "Federal-style containment response recommended. Immediate defensive review advised."
 
-    with open(threat_file, "w") as f:
-        json.dump(threat_record, f, indent=2)
+elif current_stage == "YELLOW":
+    advisory = "Early anomaly detection state. Increased monitoring recommended."
+
+else:
+    advisory = "No containment advisories active."
 
 
 # === Maintain Rolling Risk History ===
 risk_history = previous_data.get("risk_history", [])
-# === Campaign Detection Engine ===
-CAMPAIGN_DIR = f"{ARTIFACT_ROOT}/campaigns"
-os.makedirs(CAMPAIGN_DIR, exist_ok=True)
 
-campaign_alert = ""
-
-# Detect multi-day escalation patterns
-if len(risk_history) >= 3:
-
-    last3 = risk_history[-3:]
-
-    r1 = last3[0]["risk"]
-    r2 = last3[1]["risk"]
-    r3 = last3[2]["risk"]
-
-    if r1 < r2 < r3 and r3 >= 80:
-
-        campaign_id = f"CVX-CAM-{TODAY}"
-        campaign_file = f"{CAMPAIGN_DIR}/{campaign_id}.json"
-
-        campaign_data = {
-            "campaign_id": campaign_id,
-            "type": "Escalating Intrusion Pattern",
-            "start_date": last3[0]["date"],
-            "end_date": TODAY,
-            "risk_progression": [r1, r2, r3],
-            "final_stage": current_stage
-        }
-
-        with open(campaign_file, "w") as f:
-            json.dump(campaign_data, f, indent=2)
-
-        campaign_alert = f"🚨 Attack campaign detected ({campaign_id})"
-# Prevent duplicate same-day entries
 if not risk_history or risk_history[-1]["date"] != TODAY:
 
     risk_history.append({
@@ -280,122 +265,11 @@ with open(STATE_FILE, "w") as f:
     }, f, indent=2)
 
 
-# === Create Incident if Stage Changed ===
-incident_note = ""
-
-if escalation:
-
-    incident_id = f"INC-{TODAY}"
-    incident_path = f"{INCIDENT_DIR}/{incident_id}.json"
-
-    with open(incident_path, "w") as f:
-
-        json.dump({
-            "incident_id": incident_id,
-            "date": TODAY,
-            "previous_stage": previous_stage,
-            "new_stage": current_stage,
-            "risk_score": risk_score
-        }, f, indent=2)
-
-    incident_note = f"\n🚨 STAGE ESCALATION DETECTED: {previous_stage} → {current_stage}\n"
-
-
-# === Incident Listing ===
-incident_files = sorted(Path(INCIDENT_DIR).glob("INC-*.json"))
-
-incident_list = ""
-
-for file in incident_files:
-
-    with open(file) as f:
-        data = json.load(f)
-
-        incident_list += f"- {data['incident_id']} ({data['previous_stage']} → {data['new_stage']})\n"
-
-if not incident_list:
-    incident_list = "No active incidents.\n"
-
-
 # === Build Trend Output ===
 trend_output = ""
 
 for entry in risk_history:
-
     trend_output += f"- {entry['date']} → {entry['risk']} ({entry['stage']})\n"
-
-# === IOC Generation Engine ===
-
-ioc_records = []
-
-if failed_ssh >= 20:
-    ioc_records.append({
-        "type": "Brute Force Indicator",
-        "source": "SSH Authentication",
-        "confidence": "Medium"
-    })
-
-if listening_ports >= 15:
-    ioc_records.append({
-        "type": "Exposure Indicator",
-        "source": "Network Surface Expansion",
-        "confidence": "Low"
-    })
-
-if suid_count >= 40:
-    ioc_records.append({
-        "type": "Privilege Escalation Indicator",
-        "source": "SUID Binary Surface",
-        "confidence": "High"
-    })
-
-if running_services >= 70:
-    ioc_records.append({
-        "type": "Persistence Indicator",
-        "source": "Service Density",
-        "confidence": "Medium"
-    })
-
-# Save IOC intelligence if indicators exist
-if ioc_records:
-    ioc_data = {
-        "date": TODAY,
-        "stage": current_stage,
-        "risk_score": risk_score,
-        "indicators": ioc_records
-    }
-
-    os.makedirs(f"{ARTIFACT_ROOT}/ioc", exist_ok=True)
-
-    ioc_file = f"{ARTIFACT_ROOT}/ioc/ioc_{TODAY}.json"
-
-    with open(ioc_file, "w") as f:
-        json.dump(ioc_data, f, indent=2)
-
-# === Threat Output ===
-if threats:
-
-    threat_output = ""
-
-    for t in threats:
-        threat_output += f"- {t}\n"
-
-else:
-
-    threat_output = "No active threat signatures detected.\n"
-
-
-# === Format Delta ===
-def fmt_delta(value):
-
-    if value > 0:
-        return f" (+{value})"
-
-    elif value < 0:
-        return f" ({value})"
-
-    else:
-        return ""
 
 
 # === Dashboard Render ===
@@ -403,36 +277,38 @@ dashboard = f"""
 <!-- CVX-REPORT-START -->
 # 🕵️ CyberVector Containment Command
 
-**Date:** {TODAY}  
-**Containment Stage:** {current_stage}  
-**Risk Score:** {risk_score}
+Date: {TODAY}  
+Containment Stage: {current_stage}  
+Risk Score: {risk_score}  
+Exposure Index: {exposure_index}
 
-{incident_note}
+## 🧬 Outbreak Classification
+{outbreak_class}
 
 ## 📊 Host Metrics
-- Failed SSH Attempts: {failed_ssh}{fmt_delta(delta_ssh)}
-- Listening Ports: {listening_ports}{fmt_delta(delta_ports)}
-- Running Services: {running_services}{fmt_delta(delta_services)}
-- SUID Binaries: {suid_count}{fmt_delta(delta_suid)}
+- Failed SSH Attempts: {failed_ssh}
+- Listening Ports: {listening_ports}
+- Running Services: {running_services}
+- SUID Binaries: {suid_count}
 
-## 🧬 Containment Status
-{status_msg}
 ## 🧠 Threat Intelligence
-{threat_output}
-## 🔎 Indicators of Compromise (IOC)
-{len(ioc_records)} indicators generated today.
-## 📈 14-Day Risk Trend
-{trend_output}
-## 🎯 Campaign Intelligence
-{campaign_alert if campaign_alert else "No active campaigns detected."}
+{chr(10).join(f"- {t}" for t in threats) if threats else "No active threat signatures detected."}
+
 ## 🦠 Propagation Simulation
 {propagation_output}
-## 🛡️ Containment Recommendations
+
+## 🛡 Containment Recommendations
 {containment_output}
+
 ## 📝 Adversary Behavior Profile
 {behavior_output}
-## 📂 Incident Log
-{incident_list}
+
+## 📈 14-Day Risk Trend
+{trend_output}
+
+## ⚠ Containment Advisory
+{advisory}
+
 <!-- CVX-REPORT-END -->
 """
 
