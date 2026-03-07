@@ -220,6 +220,60 @@ behavior_output = ""
 for b in behaviors:
     behavior_output += f"- {b}\n"
 
+# === Campaign Intelligence Engine ===
+
+CAMPAIGN_FILE = f"{ARTIFACT_ROOT}/campaigns/campaign_state.json"
+
+campaign_data = {}
+
+if os.path.exists(CAMPAIGN_FILE):
+    with open(CAMPAIGN_FILE) as f:
+        campaign_data = json.load(f)
+
+campaign_history = campaign_data.get("history", [])
+
+today_activity = {
+    "date": TODAY,
+    "ssh": failed_ssh,
+    "ports": listening_ports,
+    "services": running_services,
+    "suid": suid_count
+}
+
+campaign_history.append(today_activity)
+campaign_history = campaign_history[-7:]
+
+campaign_detected = False
+campaign_pattern = []
+
+for entry in campaign_history:
+    if entry["ssh"] > 20:
+        campaign_pattern.append("Credential Access")
+
+    if entry["suid"] > 30:
+        campaign_pattern.append("Privilege Escalation")
+
+    if entry["ports"] > 15:
+        campaign_pattern.append("Command and Control Exposure")
+
+    if entry["services"] > 60:
+        campaign_pattern.append("Persistence")
+
+if len(set(campaign_pattern)) >= 2:
+    campaign_detected = True
+
+if campaign_detected:
+    campaign_output = f"""
+Campaign ID: CVX-{TODAY}
+Attack Pattern: {" → ".join(set(campaign_pattern))}
+Confidence Level: MODERATE
+"""
+else:
+    campaign_output = "No coordinated campaign activity detected."
+
+with open(CAMPAIGN_FILE, "w") as f:
+    json.dump({"history": campaign_history}, f, indent=2)
+
 
 # === Containment Advisory Bulletin ===
 advisory = ""
@@ -299,6 +353,9 @@ Exposure Index: {exposure_index}
 
 ## 🛡 Containment Recommendations
 {containment_output}
+
+## 🎯 Campaign Intelligence
+{campaign_output}
 
 ## 📝 Adversary Behavior Profile
 {behavior_output}
