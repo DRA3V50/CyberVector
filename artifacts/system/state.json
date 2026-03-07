@@ -1,5 +1,5 @@
 {
-  "date": "2026-03-06",
+  "date": "2026-03-07",
   "stage": "GREEN",
   "risk_score": 32.0,
   "risk_history": [
@@ -15,6 +15,11 @@
     },
     {
       "date": "2026-03-06",
+      "risk": 32.0,
+      "stage": "GREEN"
+    },
+    {
+      "date": "2026-03-07",
       "risk": 32.0,
       "stage": "GREEN"
     }
