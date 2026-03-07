@@ -14,6 +14,7 @@ THREAT_DIR = f"{ARTIFACT_ROOT}/threats"
 os.makedirs(INCIDENT_DIR, exist_ok=True)
 os.makedirs(THREAT_DIR, exist_ok=True)
 
+
 def read_metric(file_path, key):
     if not os.path.exists(file_path):
         return 0
@@ -23,42 +24,6 @@ def read_metric(file_path, key):
                 return int(line.split(":")[1].strip())
     return 0
 
-# === IOC Generation Engine ===
-
-IOC_DIR = f"{ARTIFACT_ROOT}/ioc"
-os.makedirs(IOC_DIR, exist_ok=True)
-
-ioc_list = []
-
-# SSH brute force indicator
-if failed_ssh > 20:
-    indicator = f"{TODAY} | Credential Attack Pattern | SSH failures: {failed_ssh}"
-    ioc_list.append(indicator)
-
-# suspicious port exposure
-if listening_ports > 15:
-    indicator = f"{TODAY} | Network Exposure | Listening ports: {listening_ports}"
-    ioc_list.append(indicator)
-
-# privilege escalation surface
-if suid_count > 30:
-    indicator = f"{TODAY} | Privilege Escalation Surface | SUID binaries: {suid_count}"
-    ioc_list.append(indicator)
-
-# abnormal service density
-if running_services > 60:
-    indicator = f"{TODAY} | Persistence Indicator | Services running: {running_services}"
-    ioc_list.append(indicator)
-
-
-IOC_FILE = f"{IOC_DIR}/ioc_{TODAY}.txt"
-
-if ioc_list:
-    with open(IOC_FILE, "w") as f:
-        for ioc in ioc_list:
-            f.write(ioc + "\n")
-
-ioc_count = len(ioc_list)
 
 # === Collect today's metrics ===
 auth_file = f"{ARTIFACT_ROOT}/auth/auth_{TODAY}.log"
@@ -69,6 +34,35 @@ failed_ssh = read_metric(auth_file, "Failed SSH Attempts")
 listening_ports = read_metric(network_file, "Listening Ports")
 running_services = read_metric(system_file, "Running Services")
 suid_count = read_metric(system_file, "SUID Binaries")
+
+
+# === IOC Generation Engine ===
+
+IOC_DIR = f"{ARTIFACT_ROOT}/ioc"
+os.makedirs(IOC_DIR, exist_ok=True)
+
+ioc_list = []
+
+if failed_ssh > 20:
+    ioc_list.append(f"{TODAY} | Credential Attack Pattern | SSH failures: {failed_ssh}")
+
+if listening_ports > 15:
+    ioc_list.append(f"{TODAY} | Network Exposure | Listening ports: {listening_ports}")
+
+if suid_count > 30:
+    ioc_list.append(f"{TODAY} | Privilege Escalation Surface | SUID binaries: {suid_count}")
+
+if running_services > 60:
+    ioc_list.append(f"{TODAY} | Persistence Indicator | Services running: {running_services}")
+
+IOC_FILE = f"{IOC_DIR}/ioc_{TODAY}.txt"
+
+if ioc_list:
+    with open(IOC_FILE, "w") as f:
+        for ioc in ioc_list:
+            f.write(ioc + "\n")
+
+ioc_count = len(ioc_list)
 
 
 # === Base Risk Calculation ===
@@ -92,7 +86,7 @@ risk_score = (previous_risk * 0.6) + (base_risk * 0.4)
 risk_score = round(risk_score, 1)
 
 
-# === Exposure Index (Bio-response terminology) ===
+# === Exposure Index ===
 exposure_index = round(risk_score * 1.15, 1)
 
 
@@ -101,25 +95,19 @@ def determine_stage(score):
 
     if score < 40:
         stage = "GREEN"
-
     elif score < 100:
         stage = "YELLOW"
-
     elif score < 200:
         stage = "ORANGE"
-
     else:
         stage = "RED"
 
     if stage == "GREEN":
         status_msg = "Containment stable. No propagation detected."
-
     elif stage == "YELLOW":
         status_msg = "Anomalous activity increasing. Monitoring escalation."
-
     elif stage == "ORANGE":
         status_msg = "Sustained compromise indicators present. Containment at risk."
-
     else:
         status_msg = "Critical outbreak condition. Immediate intervention required."
 
@@ -132,33 +120,15 @@ current_stage, status_msg = determine_stage(risk_score)
 # === Outbreak Classification ===
 if risk_score < 40:
     outbreak_class = "Baseline Activity"
-
 elif risk_score < 100:
     outbreak_class = "Elevated Host Exposure"
-
 elif risk_score < 200:
     outbreak_class = "Active Intrusion Environment"
-
 else:
     outbreak_class = "Critical Compromise Condition"
 
 
-# === Metric Delta Tracking ===
-def delta(current, previous):
-    return current - previous if previous else 0
-
-
-delta_ssh = delta(failed_ssh, previous_metrics.get("failed_ssh", 0))
-delta_ports = delta(listening_ports, previous_metrics.get("listening_ports", 0))
-delta_services = delta(running_services, previous_metrics.get("running_services", 0))
-delta_suid = delta(suid_count, previous_metrics.get("suid_count", 0))
-
-
-# === Escalation Detection ===
-escalation = previous_stage and previous_stage != current_stage
-
-
-# === Threat Intelligence Engine ===
+# === Threat Intelligence ===
 threats = []
 
 if failed_ssh > 25:
@@ -174,12 +144,12 @@ if running_services > 70:
     threats.append("[MEDIUM] Abnormally dense service environment")
 
 
-# === Propagation Simulation Engine ===
+# === Propagation Simulation ===
 infection_score = (
-    (listening_ports * 2) +
-    (running_services * 0.5) +
-    (suid_count * 1.2) +
-    (failed_ssh * 1.5)
+    (listening_ports * 2)
+    + (running_services * 0.5)
+    + (suid_count * 1.2)
+    + (failed_ssh * 1.5)
 )
 
 if infection_score < 50:
@@ -205,33 +175,7 @@ Exposure Surface: {exposure_surface}
 """
 
 
-# === Containment Recommendation Engine ===
-recommendations = []
-
-if failed_ssh > 10:
-    recommendations.append("Restrict SSH authentication attempts (fail2ban recommended)")
-
-if listening_ports > 10:
-    recommendations.append("Audit exposed ports and close unnecessary services")
-
-if suid_count > 30:
-    recommendations.append("Review SUID binaries for privilege escalation risks")
-
-if running_services > 50:
-    recommendations.append("Investigate excessive running services")
-
-if infection_probability == "HIGH":
-    recommendations.append("Consider host isolation or segmentation")
-
-if not recommendations:
-    recommendations.append("System operating within expected containment parameters.")
-
-containment_output = ""
-for r in recommendations:
-    containment_output += f"- {r}\n"
-
-
-# === Adversary Behavior Classification ===
+# === Adversary Behavior ===
 behaviors = []
 
 if failed_ssh > 20:
@@ -252,14 +196,12 @@ if infection_probability == "HIGH":
 if not behaviors:
     behaviors.append("No adversary behavior patterns detected.")
 
-behavior_output = ""
-for b in behaviors:
-    behavior_output += f"- {b}\n"
+behavior_output = "\n".join(f"- {b}" for b in behaviors)
 
-# === Campaign Intelligence Engine ===
+
+# === Campaign Intelligence ===
 
 CAMPAIGN_FILE = f"{ARTIFACT_ROOT}/campaigns/campaign_state.json"
-
 campaign_data = {}
 
 if os.path.exists(CAMPAIGN_FILE):
@@ -273,32 +215,25 @@ today_activity = {
     "ssh": failed_ssh,
     "ports": listening_ports,
     "services": running_services,
-    "suid": suid_count
+    "suid": suid_count,
 }
 
 campaign_history.append(today_activity)
 campaign_history = campaign_history[-7:]
 
-campaign_detected = False
 campaign_pattern = []
 
 for entry in campaign_history:
     if entry["ssh"] > 20:
         campaign_pattern.append("Credential Access")
-
     if entry["suid"] > 30:
         campaign_pattern.append("Privilege Escalation")
-
     if entry["ports"] > 15:
         campaign_pattern.append("Command and Control Exposure")
-
     if entry["services"] > 60:
         campaign_pattern.append("Persistence")
 
 if len(set(campaign_pattern)) >= 2:
-    campaign_detected = True
-
-if campaign_detected:
     campaign_output = f"""
 Campaign ID: CVX-{TODAY}
 Attack Pattern: {" → ".join(set(campaign_pattern))}
@@ -309,57 +244,6 @@ else:
 
 with open(CAMPAIGN_FILE, "w") as f:
     json.dump({"history": campaign_history}, f, indent=2)
-
-
-# === Containment Advisory Bulletin ===
-advisory = ""
-
-if current_stage in ["ORANGE", "RED"]:
-    advisory = "Federal-style containment response recommended. Immediate defensive review advised."
-
-elif current_stage == "YELLOW":
-    advisory = "Early anomaly detection state. Increased monitoring recommended."
-
-else:
-    advisory = "No containment advisories active."
-
-
-# === Maintain Rolling Risk History ===
-risk_history = previous_data.get("risk_history", [])
-
-if not risk_history or risk_history[-1]["date"] != TODAY:
-
-    risk_history.append({
-        "date": TODAY,
-        "risk": risk_score,
-        "stage": current_stage
-    })
-
-risk_history = risk_history[-14:]
-
-
-# === Save Current State ===
-with open(STATE_FILE, "w") as f:
-
-    json.dump({
-        "date": TODAY,
-        "stage": current_stage,
-        "risk_score": risk_score,
-        "risk_history": risk_history,
-        "metrics": {
-            "failed_ssh": failed_ssh,
-            "listening_ports": listening_ports,
-            "running_services": running_services,
-            "suid_count": suid_count
-        }
-    }, f, indent=2)
-
-
-# === Build Trend Output ===
-trend_output = ""
-
-for entry in risk_history:
-    trend_output += f"- {entry['date']} → {entry['risk']} ({entry['stage']})\n"
 
 
 # === Dashboard Render ===
@@ -390,20 +274,11 @@ Exposure Index: {exposure_index}
 ## 🦠 Propagation Simulation
 {propagation_output}
 
-## 🛡 Containment Recommendations
-{containment_output}
-
 ## 🎯 Campaign Intelligence
 {campaign_output}
 
 ## 📝 Adversary Behavior Profile
 {behavior_output}
-
-## 📈 14-Day Risk Trend
-{trend_output}
-
-## ⚠ Containment Advisory
-{advisory}
 
 <!-- CVX-REPORT-END -->
 """
@@ -417,16 +292,11 @@ start = "<!-- CVX-REPORT-START -->"
 end = "<!-- CVX-REPORT-END -->"
 
 if start in content and end in content:
-
     before = content.split(start)[0]
     after = content.split(end)[1]
-
     new_content = before + dashboard + after
-
 else:
-
     new_content = content + dashboard
-
 
 with open("README.md", "w") as f:
     f.write(new_content)
