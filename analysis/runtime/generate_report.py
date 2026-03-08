@@ -178,7 +178,7 @@ Exposure Surface: {exposure_surface}
 # === Adversary Behavior ===
 behaviors = []
 
-if failed_ssh > 0:
+if failed_ssh > 20:
     behaviors.append("Credential Access Activity (SSH brute force pattern)")
 
 if suid_count > 30:
