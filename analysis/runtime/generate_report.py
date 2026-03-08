@@ -277,12 +277,11 @@ Exposure Index: {exposure_index}
 ## 🎯 Campaign Intelligence
 {campaign_output}
 
-## 📝 Adversary Behavior Profile
+## 🎭 Adversary Behavior Profile
 {behavior_output}
 
 <!-- CVX-REPORT-END -->
 """
-
 
 # === Inject Into README ===
 with open("README.md", "r") as f:
