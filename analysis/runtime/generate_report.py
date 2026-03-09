@@ -249,36 +249,64 @@ with open(CAMPAIGN_FILE, "w") as f:
 # === Dashboard Render ===
 dashboard = f"""
 <!-- CVX-REPORT-START -->
+
 # 🕵️ CyberVector Containment Command
 
-Date: {TODAY}  
-Containment Stage: {current_stage}  
-Risk Score: {risk_score}  
-Exposure Index: {exposure_index}
+**Date:** {TODAY}  
+**Containment Stage:** {current_stage}  
+**Risk Score:** {risk_score}  
+**Exposure Index:** {exposure_index}
+
+---
+
+## 📊 Host Metrics
+
+| Metric | Value |
+|------|------|
+| Failed SSH Attempts | {failed_ssh} |
+| Listening Ports | {listening_ports} |
+| Running Services | {running_services} |
+| SUID Binaries | {suid_count} |
+
+---
 
 ## 🧬 Outbreak Classification
 {outbreak_class}
 
-## 📊 Host Metrics
-- Failed SSH Attempts: {failed_ssh}
-- Listening Ports: {listening_ports}
-- Running Services: {running_services}
-- SUID Binaries: {suid_count}
+---
 
 ## 🧠 Threat Intelligence
 {chr(10).join(f"- {t}" for t in threats) if threats else "No active threat signatures detected."}
 
+---
+
 ## 🔎 Indicators of Compromise (IOC)
 {ioc_count} indicators generated today.
+
+---
 
 ## 🦠 Propagation Simulation
 {propagation_output}
 
+---
+
 ## 🎯 Campaign Intelligence
 {campaign_output}
 
+---
+
 ## 🎭 Adversary Behavior Profile
 {behavior_output}
+
+---
+
+## 📈 14-Day Risk Trend
+{trend_output}
+
+---
+
+## 📂 Incident Log
+{incident_output}
 
 <!-- CVX-REPORT-END -->
 """
