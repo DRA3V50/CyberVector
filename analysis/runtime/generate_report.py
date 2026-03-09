@@ -245,6 +245,27 @@ else:
 with open(CAMPAIGN_FILE, "w") as f:
     json.dump({"history": campaign_history}, f, indent=2)
 
+# === 14-Day Risk Trend ===
+import os
+
+trend_file = "analysis/runtime/risk_trend.log"
+
+# Ensure file exists
+if not os.path.exists(trend_file):
+    open(trend_file, "w").close()
+
+# Append today's score
+with open(trend_file, "a") as f:
+    f.write(f"{TODAY},{risk_score},{current_stage}\n")
+
+# Read last 14 entries
+with open(trend_file, "r") as f:
+    lines = f.readlines()[-14:]
+
+trend_output = "\n".join(
+    f"- {line.split(',')[0]} → {line.split(',')[1]} ({line.split(',')[2].strip()})"
+    for line in lines
+)
 
 # === Dashboard Render ===
 dashboard = f"""
