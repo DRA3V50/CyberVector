@@ -13,6 +13,7 @@ THREAT_DIR = f"{ARTIFACT_ROOT}/threats"
 
 os.makedirs(INCIDENT_DIR, exist_ok=True)
 os.makedirs(THREAT_DIR, exist_ok=True)
+os.makedirs("analysis/runtime", exist_ok=True)
 
 
 def read_metric(file_path, key):
@@ -37,7 +38,6 @@ suid_count = read_metric(system_file, "SUID Binaries")
 
 
 # === IOC Generation Engine ===
-
 IOC_DIR = f"{ARTIFACT_ROOT}/ioc"
 os.makedirs(IOC_DIR, exist_ok=True)
 
@@ -76,8 +76,6 @@ if os.path.exists(STATE_FILE):
     with open(STATE_FILE) as f:
         previous_data = json.load(f)
 
-previous_stage = previous_data.get("stage")
-previous_metrics = previous_data.get("metrics", {})
 previous_risk = previous_data.get("risk_score", 0)
 
 
@@ -117,17 +115,6 @@ def determine_stage(score):
 current_stage, status_msg = determine_stage(risk_score)
 
 
-# === Outbreak Classification ===
-if risk_score < 40:
-    outbreak_class = "Baseline Activity"
-elif risk_score < 100:
-    outbreak_class = "Elevated Host Exposure"
-elif risk_score < 200:
-    outbreak_class = "Active Intrusion Environment"
-else:
-    outbreak_class = "Critical Compromise Condition"
-
-
 # === Threat Intelligence ===
 threats = []
 
@@ -144,64 +131,10 @@ if running_services > 70:
     threats.append("[MEDIUM] Abnormally dense service environment")
 
 
-# === Propagation Simulation ===
-infection_score = (
-    (listening_ports * 2)
-    + (running_services * 0.5)
-    + (suid_count * 1.2)
-    + (failed_ssh * 1.5)
-)
-
-if infection_score < 50:
-    infection_probability = "LOW"
-elif infection_score < 120:
-    infection_probability = "MODERATE"
-else:
-    infection_probability = "HIGH"
-
-lateral_paths = int((listening_ports + running_services) / 20)
-
-if lateral_paths < 2:
-    exposure_surface = "MINIMAL"
-elif lateral_paths < 5:
-    exposure_surface = "MODERATE"
-else:
-    exposure_surface = "WIDE"
-
-propagation_output = f"""
-Host Infection Probability: {infection_probability}
-Potential Lateral Movement Paths: {lateral_paths}
-Exposure Surface: {exposure_surface}
-"""
-
-
-# === Adversary Behavior ===
-behaviors = []
-
-if failed_ssh > 20:
-    behaviors.append("Credential Access Activity (SSH brute force pattern)")
-
-if suid_count > 30:
-    behaviors.append("Privilege Escalation Activity (abnormal SUID surface)")
-
-if running_services > 60:
-    behaviors.append("Persistence Activity (service density anomaly)")
-
-if listening_ports > 15:
-    behaviors.append("Command and Control Exposure (network surface expansion)")
-
-if infection_probability == "HIGH":
-    behaviors.append("Lateral Movement Risk (high propagation probability)")
-
-if not behaviors:
-    behaviors.append("No adversary behavior patterns detected.")
-
-behavior_output = "\n".join(f"- {b}" for b in behaviors)
-
-
 # === Campaign Intelligence ===
-
 CAMPAIGN_FILE = f"{ARTIFACT_ROOT}/campaigns/campaign_state.json"
+os.makedirs(f"{ARTIFACT_ROOT}/campaigns", exist_ok=True)
+
 campaign_data = {}
 
 if os.path.exists(CAMPAIGN_FILE):
@@ -221,44 +154,21 @@ today_activity = {
 campaign_history.append(today_activity)
 campaign_history = campaign_history[-7:]
 
-campaign_pattern = []
-
-for entry in campaign_history:
-    if entry["ssh"] > 20:
-        campaign_pattern.append("Credential Access")
-    if entry["suid"] > 30:
-        campaign_pattern.append("Privilege Escalation")
-    if entry["ports"] > 15:
-        campaign_pattern.append("Command and Control Exposure")
-    if entry["services"] > 60:
-        campaign_pattern.append("Persistence")
-
-if len(set(campaign_pattern)) >= 2:
-    campaign_output = f"""
-Campaign ID: CVX-{TODAY}
-Attack Pattern: {" → ".join(set(campaign_pattern))}
-Confidence Level: MODERATE
-"""
-else:
-    campaign_output = "No coordinated campaign activity detected."
-
 with open(CAMPAIGN_FILE, "w") as f:
     json.dump({"history": campaign_history}, f, indent=2)
 
-# === 14-Day Risk Trend ===
-import os
+campaign_output = "No coordinated campaign activity detected."
 
+
+# === 14-Day Risk Trend ===
 trend_file = "analysis/runtime/risk_trend.log"
 
-# Ensure file exists
 if not os.path.exists(trend_file):
     open(trend_file, "w").close()
 
-# Append today's score
 with open(trend_file, "a") as f:
     f.write(f"{TODAY},{risk_score},{current_stage}\n")
 
-# Read last 14 entries
 with open(trend_file, "r") as f:
     lines = f.readlines()[-14:]
 
@@ -266,6 +176,23 @@ trend_output = "\n".join(
     f"- {line.split(',')[0]} → {line.split(',')[1]} ({line.split(',')[2].strip()})"
     for line in lines
 )
+
+
+# === Incident Log Engine ===
+incident_file = "analysis/runtime/incidents.log"
+
+if not os.path.exists(incident_file):
+    open(incident_file, "w").close()
+
+if risk_score >= 100:
+    with open(incident_file, "a") as f:
+        f.write(f"INC-{TODAY} ({current_stage}) Risk Score: {risk_score}\n")
+
+with open(incident_file, "r") as f:
+    incidents = f.readlines()[-10:]
+
+incident_output = "".join(f"- {line}" for line in incidents) if incidents else "No incidents recorded."
+
 
 # === Dashboard Render ===
 dashboard = f"""
@@ -281,18 +208,10 @@ dashboard = f"""
 ---
 
 ## 📊 Host Metrics
-
-| Metric | Value |
-|------|------|
-| Failed SSH Attempts | {failed_ssh} |
-| Listening Ports | {listening_ports} |
-| Running Services | {running_services} |
-| SUID Binaries | {suid_count} |
-
----
-
-## 🧬 Outbreak Classification
-{outbreak_class}
+- Failed SSH Attempts: {failed_ssh}
+- Listening Ports: {listening_ports}
+- Running Services: {running_services}
+- SUID Binaries: {suid_count}
 
 ---
 
@@ -306,18 +225,8 @@ dashboard = f"""
 
 ---
 
-## 🦠 Propagation Simulation
-{propagation_output}
-
----
-
 ## 🎯 Campaign Intelligence
 {campaign_output}
-
----
-
-## 🎭 Adversary Behavior Profile
-{behavior_output}
 
 ---
 
@@ -331,6 +240,7 @@ dashboard = f"""
 
 <!-- CVX-REPORT-END -->
 """
+
 
 # === Inject Into README ===
 with open("README.md", "r") as f:
