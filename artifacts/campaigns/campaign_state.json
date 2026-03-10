@@ -4,13 +4,6 @@
       "date": "2026-03-08",
       "ssh": 0,
       "ports": 4,
-      "services": 25,
-      "suid": 16
-    },
-    {
-      "date": "2026-03-08",
-      "ssh": 0,
-      "ports": 4,
       "services": 26,
       "suid": 16
     },
@@ -47,6 +40,13 @@
       "ssh": 0,
       "ports": 4,
       "services": 25,
+      "suid": 16
+    },
+    {
+      "date": "2026-03-10",
+      "ssh": 0,
+      "ports": 4,
+      "services": 24,
       "suid": 16
     }
   ]
