@@ -143,8 +143,20 @@ The objective is to understand how compromise conditions propagate within Linux 
 
 # ⚖ Operational Directive
 
-CyberVector is a **defensive cybersecurity research initiative** designed for experimentation and security control validation within controlled laboratory environments.
+CyberVector is a defensive cybersecurity research initiative dedicated to the controlled study of host compromise behavior within Linux environments.
 
-All simulations and telemetry analysis documented in this repository are conducted strictly for defensive research and system hardening evaluation.
+All simulations, telemetry analysis, and containment modeling documented within this repository are conducted exclusively within isolated laboratory systems designed for controlled security experimentation.
 
-All simulations documented in this repository are conducted within isolated laboratory systems for the purpose of improving host security posture, evaluating defensive techniques, and strengthening incident response readiness.
+The purpose of CyberVector is to investigate:
+
+• authentication abuse patterns
+• privilege escalation exposure
+• persistence mechanisms
+• compromise propagation behavior
+• containment response effectiveness
+
+This platform is intended to support research into defensive cybersecurity practices, incident response preparedness, and system hardening methodologies.
+
+No tools, techniques, or procedures documented within this repository are intended for unauthorized intrusion, offensive operations, or activity outside controlled research environments.
+
+All research activities are conducted in accordance with responsible cybersecurity experimentation standards.
