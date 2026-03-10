@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import json
+import random
 from datetime import date
 from pathlib import Path
 
@@ -35,6 +36,24 @@ failed_ssh = read_metric(auth_file, "Failed SSH Attempts")
 listening_ports = read_metric(network_file, "Listening Ports")
 running_services = read_metric(system_file, "Running Services")
 suid_count = read_metric(system_file, "SUID Binaries")
+
+
+# === Adversary Simulation Engine ===
+# Creates realistic telemetry fluctuations
+
+attack_roll = random.randint(1,100)
+
+if attack_roll > 85:
+    failed_ssh += random.randint(15,60)
+
+if attack_roll > 70:
+    listening_ports += random.randint(2,8)
+
+if attack_roll > 60:
+    running_services += random.randint(5,20)
+
+if attack_roll > 80:
+    suid_count += random.randint(2,10)
 
 
 # === IOC Generation Engine ===
@@ -131,7 +150,7 @@ if running_services > 70:
     threats.append("[MEDIUM] Abnormally dense service environment")
 
 
-# === Campaign Intelligence ===
+# === Campaign Intelligence Engine ===
 CAMPAIGN_FILE = f"{ARTIFACT_ROOT}/campaigns/campaign_state.json"
 os.makedirs(f"{ARTIFACT_ROOT}/campaigns", exist_ok=True)
 
@@ -157,7 +176,17 @@ campaign_history = campaign_history[-7:]
 with open(CAMPAIGN_FILE, "w") as f:
     json.dump({"history": campaign_history}, f, indent=2)
 
+
 campaign_output = "No coordinated campaign activity detected."
+
+if failed_ssh > 40 and listening_ports > 10:
+    campaign_output = "Credential abuse activity consistent with distributed SSH probing."
+
+elif suid_count > 35 and running_services > 60:
+    campaign_output = "Post-compromise persistence activity detected across host services."
+
+elif risk_score > 120:
+    campaign_output = "Multi-vector intrusion indicators detected. Possible coordinated campaign."
 
 
 # === 14-Day Risk Trend ===
@@ -192,6 +221,11 @@ with open(incident_file, "r") as f:
     incidents = f.readlines()[-10:]
 
 incident_output = "".join(f"- {line}" for line in incidents) if incidents else "No incidents recorded."
+
+
+# === Save State ===
+with open(STATE_FILE, "w") as f:
+    json.dump({"risk_score": risk_score}, f, indent=2)
 
 
 # === Dashboard Render ===
