@@ -4,84 +4,80 @@ CyberVector is a Linux-based cyber biothreat analysis and containment initiative
 
 This repository documents structured exposure simulations using real-world tooling to evaluate authentication resilience, persistence mechanisms, privilege escalation paths, and host-level security posture. The objective is to investigate compromise patterns, implement containment measures, and verify control effectiveness through repeatable testing.
 
-CyberVector treats cyber intrusions as controlled exposure events, applying a containment lifecycle inspired by real-world incident response and infrastructure protection programs.
+CyberVector treats cyber intrusions as controlled **exposure events**, applying a containment lifecycle inspired by real-world incident response and infrastructure protection programs.
 
 ---
 
-# 🧬 Operational Doctrine
+# ☣ Digital Pathogen Model
 
-CyberVector models cyber intrusions using principles derived from biological containment strategy.  
-Rather than treating intrusions as isolated technical failures, the platform evaluates compromise events as **exposure incidents** with measurable propagation risk.
+CyberVector models cyber compromise conditions using principles derived from biological containment strategy.
 
-The initiative focuses on three primary operational goals:
+Rather than treating intrusions as isolated technical failures, the platform evaluates abnormal host behavior as potential **exposure incidents** with measurable propagation risk.
 
-• **Exposure Detection** – identify abnormal host behavior indicating possible compromise  
-• **Propagation Analysis** – evaluate potential lateral movement and host exposure surfaces  
-• **Containment Validation** – test defensive controls designed to isolate and neutralize compromise activity  
+The initiative focuses on three operational objectives:
 
-The resulting telemetry is analyzed to determine the current **containment stage** of the monitored system and to produce response guidance consistent with structured incident response frameworks used by organizations such as the Cybersecurity and Infrastructure Security Agency (CISA) and the Federal Bureau of Investigation (FBI).
+• **Exposure Detection** — identify abnormal host behavior indicating possible compromise  
+• **Propagation Analysis** — evaluate lateral movement potential and host exposure surfaces  
+• **Containment Validation** — verify defensive controls capable of isolating compromise activity  
 
----
-
-# 🧪 Containment Lifecycle Model
-
-CyberVector organizes host security analysis into a containment lifecycle designed to mirror real-world cyber defense programs.
-
-| Stage | Description |
-|------|-------------|
-| **GREEN** | Normal host activity. No active compromise indicators. |
-| **YELLOW** | Early anomaly signals detected. Monitoring escalation potential. |
-| **ORANGE** | Sustained intrusion indicators present. Defensive containment required. |
-| **RED** | Critical compromise condition. Immediate intervention required. |
-
-This lifecycle allows host telemetry to be interpreted in terms of **exposure escalation**, enabling analysts to understand how compromise conditions evolve over time.
+Telemetry analysis determines the current **containment stage** of the monitored system and produces operational guidance aligned with structured incident response frameworks used by organizations such as the Cybersecurity and Infrastructure Security Agency (CISA) and the Federal Bureau of Investigation (FBI).
 
 ---
 
-# 🧠 System Architecture
+# 🚦 Containment Alert Levels
 
-CyberVector operates through a structured telemetry pipeline designed for Linux host analysis.
+CyberVector evaluates compromise escalation using a structured containment classification model.
 
-Host Telemetry
-↓
-Security Metric Collection
-↓
-Risk Scoring Engine
-↓
-Containment Stage Evaluation
-↓
-Threat Intelligence Correlation
-↓
-Propagation Simulation
-↓
-Containment Guidance Output
+| Level | Status |
+|------|------|
+| 🟢 GREEN | Normal host activity |
+| 🟡 YELLOW | Early anomaly signals detected |
+| 🟠 ORANGE | Sustained intrusion indicators present |
+| 🔴 RED | Critical compromise condition |
 
-
-The system continuously analyzes metrics including:
-
-• SSH authentication failures  
-• exposed network services  
-• service density anomalies  
-• SUID privilege escalation surface  
-
-These signals contribute to a calculated **risk score**, which determines containment stage and outbreak classification.
+This lifecycle allows host telemetry to be interpreted in terms of **exposure escalation**, helping analysts understand how compromise conditions develop and spread.
 
 ---
 
-# 📊 Live Runtime Containment Data
+# 🧬 Compromise Propagation Map
+
+CyberVector organizes host investigation into a structured compromise analysis pipeline used to study how intrusion activity develops, propagates, and is contained within Linux environments.
+
+### 1️⃣ Host Security Posture Evaluation
+Baseline analysis of system configuration and exposed services.
+
+### 2️⃣ Authentication Abuse Analysis
+Detection of SSH brute-force attempts and credential abuse patterns.
+
+### 3️⃣ Exposure Validation
+Verification of abnormal telemetry signals against system configuration.
+
+### 4️⃣ Patch Intelligence
+Evaluation of Ubuntu package update status and vulnerability exposure.
+
+### 5️⃣ Compromise Simulation
+Controlled simulations used to observe compromise behavior within host telemetry.
+
+### 6️⃣ Propagation Modeling
+Analysis of how compromise conditions could spread through exposed services.
+
+### 7️⃣ Lateral Movement Analysis
+Investigation of credential reuse and trust relationships between services.
+
+### 8️⃣ Persistence Detection
+Identification of unauthorized services or startup persistence mechanisms.
+
+### 9️⃣ Privilege Escalation Review
+Analysis of SUID binaries and potential privilege escalation surfaces.
+
+### 🔄 Containment Re-Validation Cycle
+Verification that defensive controls restore a secure host posture after containment.
+
+---
+
+# 🖥 Ubuntu Host Telemetry
 
 The section below represents the most recent containment analysis generated by the CyberVector runtime telemetry engine.
-
-
-
-
-
-
-
-
-
-
-
 
 <!-- CVX-REPORT-START -->
 
@@ -90,7 +86,7 @@ The section below represents the most recent containment analysis generated by t
 **Date:** 2026-03-10  
 **Containment Stage:** GREEN  
 **Risk Score:** 32.0  
-**Exposure Index:** 36.8
+**Exposure Index:** 36.8  
 
 ---
 
@@ -127,35 +123,26 @@ No incidents recorded.
 
 <!-- CVX-REPORT-END -->
 
-
-
-
-
-
-
-
-
-
-
-
 ---
 
-# 🔬 Research Focus
+# 🔎 Threat Investigation Division
 
-CyberVector investigates several critical areas of host-level security:
+CyberVector investigates several critical areas of host-level security within Linux environments:
 
 • authentication attack resilience  
 • privilege escalation exposure analysis  
 • persistence mechanism detection  
 • lateral movement surface modeling  
-• containment response validation  
+• defensive containment validation  
 
-The objective is to understand how compromise events propagate within Linux environments and how defensive controls can effectively contain those exposures.
+The objective is to understand how compromise conditions propagate within Linux systems and how defensive controls can interrupt that progression.
 
 ---
 
-# ⚠ Research Notice
+# ⚖ Operational Directive
 
-CyberVector is a **defensive cybersecurity research initiative** designed for experimentation and security control validation within controlled environments.
+CyberVector is a **defensive cybersecurity research initiative** designed for experimentation and security control validation within controlled laboratory environments.
+
+All simulations and telemetry analysis documented in this repository are conducted strictly for defensive research and system hardening evaluation.
 
 All simulations documented in this repository are conducted within isolated laboratory systems for the purpose of improving host security posture, evaluating defensive techniques, and strengthening incident response readiness.
