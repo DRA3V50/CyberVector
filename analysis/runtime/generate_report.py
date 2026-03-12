@@ -215,10 +215,9 @@ emoji_map = {
     "RED": "🔴"
 }
 
-trend_output = ""
 for i, line in enumerate(lines, start=1):
-    _, score_val, stage_val = line.strip().split(",")
-    trend_output += f"- Day {i}: {emoji_map[stage_val]} {score_val} ({stage_val})\n"
+    date_val, score_val, stage_val = line.strip().split(",")
+    trend_output += f"- Day {i} | {date_val} | {emoji_map[stage_val]} {score_val} ({stage_val})\n"
 
 
 # === Incident Log Engine ===
@@ -234,8 +233,13 @@ if risk_score >= 100:
 with open(incident_file, "r") as f:
     incidents = f.readlines()[-10:]
 
-incident_output = "".join(f"- {line}" for line in incidents) if incidents else "No incidents recorded."
+incident_output = ""
 
+if incidents:
+    for entry in incidents:
+        incident_output += f"- {entry}"
+else:
+    incident_output = "No incidents recorded."
 
 # === Save State ===
 with open(STATE_FILE, "w") as f:
@@ -263,7 +267,7 @@ dashboard = f"""
 
 ---
 
-## 🛰 Threat Intelligence
+## 🧬 Threat Intelligence
 {chr(10).join(f"- {t}" for t in threats) if threats else "No active threat signatures detected."}
 
 ---
