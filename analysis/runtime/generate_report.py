@@ -215,10 +215,11 @@ emoji_map = {
     "RED": "🔴"
 }
 
+trend_output = ""
+
 for i, line in enumerate(lines, start=1):
     date_val, score_val, stage_val = line.strip().split(",")
     trend_output += f"- Day {i} | {date_val} | {emoji_map[stage_val]} {score_val} ({stage_val})\n"
-
 
 # === Incident Log Engine ===
 incident_file = "analysis/runtime/incidents.log"
