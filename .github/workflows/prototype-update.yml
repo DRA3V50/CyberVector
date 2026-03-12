@@ -2,7 +2,7 @@ name: CyberVector Host Containment
 
 on:
   schedule:
-    - cron: '0 14,2 * * *'  # 9AM and 9PM EST (UTC adjusted)
+    - cron: '0 13,1 * * *'  # 9AM and 9PM EST (UTC adjusted)
   workflow_dispatch:
 
 jobs:
