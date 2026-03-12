@@ -39,8 +39,6 @@ suid_count = read_metric(system_file, "SUID Binaries")
 
 
 # === Adversary Simulation Engine ===
-# Creates realistic telemetry fluctuations
-
 attack_roll = random.randint(1,100)
 
 if attack_roll > 85:
@@ -112,12 +110,16 @@ def determine_stage(score):
 
     if score < 40:
         stage = "GREEN"
+        emoji = "🟢"
     elif score < 100:
         stage = "YELLOW"
+        emoji = "🟡"
     elif score < 200:
         stage = "ORANGE"
+        emoji = "🟠"
     else:
         stage = "RED"
+        emoji = "🔴"
 
     if stage == "GREEN":
         status_msg = "Containment stable. No propagation detected."
@@ -128,10 +130,10 @@ def determine_stage(score):
     else:
         status_msg = "Critical outbreak condition. Immediate intervention required."
 
-    return stage, status_msg
+    return stage, emoji, status_msg
 
 
-current_stage, status_msg = determine_stage(risk_score)
+current_stage, stage_emoji, status_msg = determine_stage(risk_score)
 
 
 # === Threat Intelligence ===
@@ -189,22 +191,34 @@ elif risk_score > 120:
     campaign_output = "Multi-vector intrusion indicators detected. Possible coordinated campaign."
 
 
-# === 14-Day Risk Trend ===
+# === 14-Day Risk Trend (Reset After 14) ===
 trend_file = "analysis/runtime/risk_trend.log"
 
 if not os.path.exists(trend_file):
     open(trend_file, "w").close()
 
-with open(trend_file, "a") as f:
-    f.write(f"{TODAY},{risk_score},{current_stage}\n")
-
 with open(trend_file, "r") as f:
-    lines = f.readlines()[-14:]
+    lines = f.readlines()
 
-trend_output = "\n".join(
-    f"- {line.split(',')[0]} → {line.split(',')[1]} ({line.split(',')[2].strip()})"
-    for line in lines
-)
+if len(lines) >= 14:
+    lines = []
+
+lines.append(f"{TODAY},{risk_score},{current_stage}\n")
+
+with open(trend_file, "w") as f:
+    f.writelines(lines)
+
+emoji_map = {
+    "GREEN": "🟢",
+    "YELLOW": "🟡",
+    "ORANGE": "🟠",
+    "RED": "🔴"
+}
+
+trend_output = ""
+for i, line in enumerate(lines, start=1):
+    _, score_val, stage_val = line.strip().split(",")
+    trend_output += f"- Day {i}: {emoji_map[stage_val]} {score_val} ({stage_val})\n"
 
 
 # === Incident Log Engine ===
@@ -235,7 +249,7 @@ dashboard = f"""
 # 🕵️ CyberVector Containment Command
 
 **Date:** {TODAY}  
-**Containment Stage:** {current_stage}  
+**Containment Stage:** {stage_emoji} {current_stage}  
 **Risk Score:** {risk_score}  
 **Exposure Index:** {exposure_index}
 
@@ -249,7 +263,7 @@ dashboard = f"""
 
 ---
 
-## 🧠 Threat Intelligence
+## 🛰 Threat Intelligence
 {chr(10).join(f"- {t}" for t in threats) if threats else "No active threat signatures detected."}
 
 ---
