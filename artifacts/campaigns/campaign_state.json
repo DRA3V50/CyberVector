@@ -1,13 +1,6 @@
 {
   "history": [
     {
-      "date": "2026-03-10",
-      "ssh": 0,
-      "ports": 4,
-      "services": 24,
-      "suid": 16
-    },
-    {
       "date": "2026-03-11",
       "ssh": 31,
       "ports": 8,
@@ -48,6 +41,13 @@
       "ports": 8,
       "services": 44,
       "suid": 26
+    },
+    {
+      "date": "2026-03-13",
+      "ssh": 45,
+      "ports": 12,
+      "services": 31,
+      "suid": 23
     }
   ]
 }
