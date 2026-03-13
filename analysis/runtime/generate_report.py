@@ -119,25 +119,36 @@ current_stage,stage_emoji = determine_stage(risk_score)
 # Investigation Stage Engine
 def investigation_stage():
 
+    reason = ""
+
     if failed_ssh > 15:
-        return "2️⃣ Authentication Abuse Analysis"
+        stage = "2️⃣ Authentication Abuse Analysis"
+        reason = f"Elevated SSH authentication failures detected ({failed_ssh}). Possible credential brute force activity."
 
-    if listening_ports > 10:
-        return "6️⃣ Propagation Modeling"
+    elif listening_ports > 10:
+        stage = "6️⃣ Propagation Modeling"
+        reason = f"Unusual number of listening ports detected ({listening_ports}). Possible lateral exposure surface."
 
-    if running_services > 50:
-        return "8️⃣ Persistence Detection"
+    elif running_services > 50:
+        stage = "8️⃣ Persistence Detection"
+        reason = f"High service density observed ({running_services}). Possible persistence mechanisms active."
 
-    if suid_count > 25:
-        return "9️⃣ Privilege Escalation Review"
+    elif suid_count > 25:
+        stage = "9️⃣ Privilege Escalation Review"
+        reason = f"Elevated SUID binary count detected ({suid_count}). Potential privilege escalation surface."
 
-    if risk_score > 80:
-        return "3️⃣ Exposure Validation"
+    elif risk_score > 80:
+        stage = "3️⃣ Exposure Validation"
+        reason = f"Risk score elevated ({risk_score}). Telemetry anomalies require exposure validation."
 
-    return "1️⃣ Host Security Posture Evaluation"
+    else:
+        stage = "1️⃣ Host Security Posture Evaluation"
+        reason = "System telemetry within normal baseline thresholds."
+
+    return stage, reason
 
 
-investigation = investigation_stage()
+investigation, stage_reason = investigation_stage()
 
 
 # Threat Intelligence
@@ -237,6 +248,8 @@ dashboard=f"""
 
 ## 🧪 Investigation Stage
 {investigation}
+
+**Reason:** {stage_reason}
 
 ---
 
