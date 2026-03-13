@@ -261,7 +261,7 @@ dashboard=f"""
 
 ---
 
-## 🧬 Threat Intelligence
+## 🦠 Threat Intelligence
 {chr(10).join(f"- {t}" for t in threats) if threats else "No active threat signatures detected."}
 
 ---
