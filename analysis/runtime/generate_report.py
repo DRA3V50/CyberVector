@@ -200,10 +200,11 @@ if not os.path.exists(trend_file):
 with open(trend_file, "r") as f:
     lines = f.readlines()
 
-if len(lines) >= 14:
-    lines = []
-
+# Add today's entry
 lines.append(f"{TODAY},{risk_score},{current_stage}\n")
+
+# Keep only last 14 entries
+lines = lines[-14:]
 
 with open(trend_file, "w") as f:
     f.writelines(lines)
@@ -220,7 +221,7 @@ trend_output = ""
 for i, line in enumerate(lines, start=1):
     date_val, score_val, stage_val = line.strip().split(",")
     trend_output += f"- Day {i} | {date_val} | {emoji_map[stage_val]} {score_val} ({stage_val})\n"
-
+    
 # === Incident Log Engine ===
 incident_file = "analysis/runtime/incidents.log"
 
