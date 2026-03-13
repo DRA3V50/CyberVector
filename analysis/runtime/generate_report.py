@@ -119,17 +119,20 @@ current_stage,stage_emoji = determine_stage(risk_score)
 # Investigation Stage Engine
 def investigation_stage():
 
-    if failed_ssh > 20:
+    if failed_ssh > 15:
         return "2️⃣ Authentication Abuse Analysis"
 
-    if listening_ports > 15:
+    if listening_ports > 10:
         return "6️⃣ Propagation Modeling"
 
-    if running_services > 60:
+    if running_services > 50:
         return "8️⃣ Persistence Detection"
 
-    if suid_count > 30:
+    if suid_count > 25:
         return "9️⃣ Privilege Escalation Review"
+
+    if risk_score > 80:
+        return "3️⃣ Exposure Validation"
 
     return "1️⃣ Host Security Posture Evaluation"
 
