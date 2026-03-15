@@ -94,7 +94,7 @@ if os.path.exists(STATE_FILE):
     with open(STATE_FILE) as f:
         previous_risk = json.load(f).get("risk_score",0)
 
-risk_score = (previous_risk * 0.6) + (base_risk * 0.4)
+risk_score = (previous_risk * 0.4) + (base_risk * 0.6)
 risk_score = round(risk_score,1)
 
 exposure_index = round(risk_score * 1.15,1)
@@ -119,37 +119,39 @@ current_stage,stage_emoji = determine_stage(risk_score)
 # Investigation Stage Engine
 def investigation_stage():
 
+    path = []
     reason = ""
 
+    path.append("1️⃣ Host Security Posture Evaluation")
+
     if failed_ssh > 15:
-        stage = "2️⃣ Authentication Abuse Analysis"
+        path.append("2️⃣ Authentication Abuse Analysis")
         reason = f"Elevated SSH authentication failures detected ({failed_ssh}). Possible credential brute force activity."
 
-    elif listening_ports > 10:
-        stage = "6️⃣ Propagation Modeling"
-        reason = f"Unusual number of listening ports detected ({listening_ports}). Possible lateral exposure surface."
-
-    elif running_services > 50:
-        stage = "8️⃣ Persistence Detection"
-        reason = f"High service density observed ({running_services}). Possible persistence mechanisms active."
-
-    elif suid_count > 25:
-        stage = "9️⃣ Privilege Escalation Review"
-        reason = f"Elevated SUID binary count detected ({suid_count}). Potential privilege escalation surface."
-
-    elif risk_score > 80:
-        stage = "3️⃣ Exposure Validation"
+    if risk_score > 80:
+        path.append("3️⃣ Exposure Validation")
         reason = f"Risk score elevated ({risk_score}). Telemetry anomalies require exposure validation."
 
-    else:
-        stage = "1️⃣ Host Security Posture Evaluation"
+    if listening_ports > 10:
+        path.append("6️⃣ Propagation Modeling")
+        reason = f"Unusual number of listening ports detected ({listening_ports}). Possible lateral exposure surface."
+
+    if running_services > 50:
+        path.append("8️⃣ Persistence Detection")
+        reason = f"High service density observed ({running_services}). Possible persistence mechanisms active."
+
+    if suid_count > 25:
+        path.append("9️⃣ Privilege Escalation Review")
+        reason = f"Elevated SUID binary count detected ({suid_count}). Potential privilege escalation surface."
+
+    if len(path) == 1:
         reason = "System telemetry within normal baseline thresholds."
 
-    return stage, reason
+    return path, reason
 
 
-investigation, stage_reason = investigation_stage()
-
+investigation_path, stage_reason = investigation_stage()
+investigation = "\n".join(investigation_path)
 
 # Threat Intelligence
 threats = []
@@ -196,7 +198,7 @@ emoji_map={
 
 trend_output=""
 
-for i,line in enumerate(lines,1):
+for i,line in enumerate(lines[-14:],1):
 
     d,s,st=line.strip().split(",")
 
