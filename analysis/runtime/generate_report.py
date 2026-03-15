@@ -198,9 +198,14 @@ emoji_map={
 
 trend_output=""
 
-for i,line in enumerate(lines[-14:],1):
+for i,line in enumerate(lines,1):
 
-    d,s,st=line.strip().split(",")
+    parts = line.strip().split(",")
+
+    if len(parts) != 3:
+        continue
+
+    d, s, st = parts
 
     trend_output+=f"- Day {i} | {d} | {emoji_map[st]} {s} ({st})\n"
 
