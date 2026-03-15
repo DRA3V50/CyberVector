@@ -207,7 +207,7 @@ for i,line in enumerate(lines[-14:],1):
         continue
 
     d,s,st=line.strip().split(",")
-    date_display = d.split("-")[0]
+    date_display = "-".join(d.split("-")[:3])
 
     trend_output += f"- Day {i} | {date_display} | {emoji_map[st]} {s} ({st})\n"
 
