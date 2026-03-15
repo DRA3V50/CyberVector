@@ -145,13 +145,18 @@ def investigation_stage():
         reason = f"Elevated SUID binary count detected ({suid_count}). Potential privilege escalation surface."
 
     if len(path) == 1:
-        reason = "System telemetry within normal baseline thresholds."
+        reason = (
+            "Telemetry baseline indicates stable host conditions. "
+            "No authentication anomalies, abnormal service density, "
+            "or privilege escalation indicators detected during this run."
+        )
 
     return path, reason
 
 
 investigation_path, stage_reason = investigation_stage()
 investigation = "\n".join(investigation_path)
+
 
 # Threat Intelligence
 threats = []
@@ -178,11 +183,8 @@ if not os.path.exists(trend_file):
 with open(trend_file,"r") as f:
     lines = f.readlines()
 
-# Prevent duplicate entries for same day
 timestamp = f"{TODAY}-{random.randint(1000,9999)}"
 lines.append(f"{timestamp},{risk_score},{current_stage}\n")
-
-lines.append(f"{TODAY},{risk_score},{current_stage}\n")
 
 lines = lines[-14:]
 
@@ -206,7 +208,7 @@ for i,line in enumerate(lines[-14:],1):
     if len(parts) != 3:
         continue
 
-    d,s,st=line.strip().split(",")
+    d,s,st = parts
     date_display = "-".join(d.split("-")[:3])
 
     trend_output += f"- Day {i} | {date_display} | {emoji_map[st]} {s} ({st})\n"
@@ -234,12 +236,28 @@ if incidents:
     for i in incidents:
         incident_output+=f"- {i}"
 else:
-    incident_output="No incidents recorded."
+    incident_output="No containment incidents recorded during the current analysis window."
 
 
 # Save State
 with open(STATE_FILE,"w") as f:
     json.dump({"risk_score":risk_score},f,indent=2)
+
+
+# Containment Interpretation
+interpretation = ""
+
+if current_stage == "GREEN":
+    interpretation = "Host telemetry indicates a stable security posture with no evidence of active compromise propagation."
+
+elif current_stage == "YELLOW":
+    interpretation = "Early anomaly signals detected. Telemetry indicates possible authentication or exposure irregularities requiring observation."
+
+elif current_stage == "ORANGE":
+    interpretation = "Sustained intrusion indicators present. Host investigation recommended to evaluate persistence or lateral movement activity."
+
+elif current_stage == "RED":
+    interpretation = "Critical compromise condition detected. Immediate containment and host isolation procedures recommended."
 
 
 # Dashboard
@@ -249,7 +267,11 @@ dashboard=f"""
 # 🕵️ CyberVector Containment Command
 
 **Date:** {TODAY}  
-**Containment Stage:** {stage_emoji} {current_stage}  
+**Containment Stage:** {stage_emoji} {current_stage}
+
+**Interpretation:**  
+{interpretation}
+
 **Risk Score:** {risk_score}  
 **Exposure Index:** {exposure_index}
 
@@ -262,7 +284,7 @@ dashboard=f"""
 
 ---
 
-## 📊 Host Metrics
+## 📊 Telemetry Snapshot
 - Failed SSH Attempts: {failed_ssh}
 - Listening Ports: {listening_ports}
 - Running Services: {running_services}
@@ -271,16 +293,18 @@ dashboard=f"""
 ---
 
 ## 🦠 Threat Intelligence
-{chr(10).join(f"- {t}" for t in threats) if threats else "No active threat signatures detected."}
+{chr(10).join(f"- {t}" for t in threats) if threats else "No active threat signatures detected. Telemetry patterns do not currently match known intrusion or propagation behaviors."}
 
 ---
 
 ## 🔎 Indicators of Compromise (IOC)
 {ioc_count} indicators generated today.
 
+Telemetry analysis reviewed authentication activity, service exposure patterns, and privilege escalation surfaces.
+
 ---
 
-## 📈 14-Day Risk Trend
+## 📈 Containment Risk Timeline (14 Runs)
 {trend_output}
 
 ---
