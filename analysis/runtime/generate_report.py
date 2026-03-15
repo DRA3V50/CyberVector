@@ -168,7 +168,7 @@ if running_services > 70:
 
 
 # 14 Day Trend Engine
-trend_file = "analysis/runtime/risk_trend.log"
+trend_file = "artifacts/system/risk_history.log"
 
 if not os.path.exists(trend_file):
     open(trend_file,"w").close()
