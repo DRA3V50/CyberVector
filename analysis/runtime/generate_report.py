@@ -179,7 +179,8 @@ with open(trend_file,"r") as f:
     lines = f.readlines()
 
 # Prevent duplicate entries for same day
-lines = [l for l in lines if not l.startswith(TODAY)]
+timestamp = f"{TODAY}-{random.randint(1000,9999)}"
+lines.append(f"{timestamp},{risk_score},{current_stage}\n")
 
 lines.append(f"{TODAY},{risk_score},{current_stage}\n")
 
@@ -198,16 +199,17 @@ emoji_map={
 
 trend_output=""
 
-for i,line in enumerate(lines,1):
+for i,line in enumerate(lines[-14:],1):
 
     parts = line.strip().split(",")
 
     if len(parts) != 3:
         continue
 
-    d, s, st = parts
+    d,s,st=line.strip().split(",")
+    date_display = d.split("-")[0]
 
-    trend_output+=f"- Day {i} | {d} | {emoji_map[st]} {s} ({st})\n"
+    trend_output += f"- Day {i} | {date_display} | {emoji_map[st]} {s} ({st})\n"
 
 
 # Incident Log
