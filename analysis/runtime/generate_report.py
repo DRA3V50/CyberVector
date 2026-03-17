@@ -40,20 +40,56 @@ running_services = read_metric(system_file, "Running Services")
 suid_count = read_metric(system_file, "SUID Binaries")
 
 
-# Adversary Simulation
-attack_roll = random.randint(1,100)
+# Threat Campaign Engine
+CAMPAIGN_FILE = f"{ARTIFACT_ROOT}/threats/campaign_state.json"
 
-if attack_roll > 85:
-    failed_ssh += random.randint(15,60)
+if os.path.exists(CAMPAIGN_FILE):
+    with open(CAMPAIGN_FILE) as f:
+        campaign_data = json.load(f)
+else:
+    campaign_data = {"active_campaign": None, "duration": 0}
 
-if attack_roll > 70:
-    listening_ports += random.randint(2,8)
+campaign = campaign_data["active_campaign"]
+duration = campaign_data["duration"]
 
-if attack_roll > 60:
-    running_services += random.randint(5,20)
+if campaign is None:
 
-if attack_roll > 80:
-    suid_count += random.randint(2,10)
+    roll = random.randint(1,100)
+
+    if roll > 85:
+        campaign = random.choice([
+            "BRUTE_FORCE",
+            "LATERAL_MOVEMENT",
+            "PERSISTENCE",
+            "PRIV_ESC"
+        ])
+        duration = random.randint(2,5)
+
+else:
+    duration -= 1
+
+    if duration <= 0:
+        campaign = None
+
+campaign_data["active_campaign"] = campaign
+campaign_data["duration"] = duration
+
+with open(CAMPAIGN_FILE,"w") as f:
+    json.dump(campaign_data,f,indent=2)
+
+
+# Apply campaign effects
+if campaign == "BRUTE_FORCE":
+    failed_ssh += random.randint(25,80)
+
+elif campaign == "LATERAL_MOVEMENT":
+    listening_ports += random.randint(5,15)
+
+elif campaign == "PERSISTENCE":
+    running_services += random.randint(10,30)
+
+elif campaign == "PRIV_ESC":
+    suid_count += random.randint(5,15)
 
 
 # IOC Engine
