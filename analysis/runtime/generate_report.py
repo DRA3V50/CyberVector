@@ -185,24 +185,55 @@ if running_services > 70:
 
 
 # -----------------------------
-# NEW: Containment Directive (10/10 feature)
+# Enhanced Containment Directive (FINAL)
 # -----------------------------
+directive_summary = ""
+
+if current_stage == "GREEN":
+    directive_summary = (
+        "System operating within established baseline parameters. "
+        "No active containment measures required. Continue routine monitoring "
+        "to ensure stability of host security posture."
+    )
+
+elif current_stage == "YELLOW":
+    directive_summary = (
+        "Early-stage anomaly indicators detected. While no confirmed compromise "
+        "is present, telemetry suggests potential exposure conditions developing. "
+        "Increased monitoring and targeted validation recommended."
+    )
+
+elif current_stage == "ORANGE":
+    directive_summary = (
+        "Sustained intrusion indicators identified. Host behavior suggests "
+        "active compromise conditions or persistence mechanisms. Immediate "
+        "investigation and containment procedures should be initiated."
+    )
+
+elif current_stage == "RED":
+    directive_summary = (
+        "Critical compromise state confirmed. Host integrity is likely impacted. "
+        "Immediate isolation, containment, and incident response escalation required."
+    )
+
+
+# Actionable layer (kept from previous improvement)
 actions = []
 
 if failed_ssh > 15:
-    actions.append("Investigate SSH logs and block offending IPs")
+    actions.append("Review SSH authentication logs and block offending sources")
 
 if listening_ports > 10:
     actions.append("Audit exposed ports and restrict unnecessary services")
 
 if running_services > 50:
-    actions.append("Review running services for persistence mechanisms")
+    actions.append("Investigate running services for persistence mechanisms")
 
 if suid_count > 25:
-    actions.append("Audit SUID binaries for privilege escalation risks")
+    actions.append("Audit SUID binaries for privilege escalation vectors")
 
 if not actions:
-    actions.append("Maintain baseline monitoring and continue observation")
+    actions.append("Maintain baseline monitoring and periodic validation checks")
 
 priority_map = {
     "GREEN": "LOW",
@@ -212,7 +243,6 @@ priority_map = {
 }
 
 priority = priority_map[current_stage]
-
 
 # -----------------------------
 # Trend Engine (rolling 14 runs)
@@ -284,6 +314,11 @@ dashboard=f"""
 ---
 
 ## 🚨 Containment Directive
+
+**Operational Assessment:**  
+{directive_summary}
+
+**Recommended Actions:**
 {chr(10).join(f"- {a}" for a in actions)}
 
 **Operational Priority:** {priority}
