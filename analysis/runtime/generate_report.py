@@ -183,6 +183,16 @@ if suid_count > 40:
 if running_services > 70:
     threats.append("[MEDIUM] Service persistence risk")
 
+# -----------------------------
+# Threat Campaign Visibility (FINAL 10/10 LAYER)
+# -----------------------------
+campaign_display = ""
+
+if campaign:
+    campaign_display = f"{campaign} (Active — {duration} run(s) remaining)"
+else:
+    campaign_display = "No active campaign detected"
+
 
 # -----------------------------
 # Enhanced Containment Directive (FINAL)
@@ -310,6 +320,11 @@ dashboard=f"""
 
 ## 🦠 Threat Intelligence
 {chr(10).join(f"- {t}" for t in threats) if threats else "No active threat signatures detected."}
+
+---
+
+## 🧪 Active Threat Campaign
+{campaign_display}
 
 ---
 
