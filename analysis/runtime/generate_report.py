@@ -33,14 +33,15 @@ auth_file = f"{ARTIFACT_ROOT}/auth/auth_{TODAY}.log"
 network_file = f"{ARTIFACT_ROOT}/network/network_{TODAY}.log"
 system_file = f"{ARTIFACT_ROOT}/system/system_{TODAY}.log"
 
-
 failed_ssh = read_metric(auth_file, "Failed SSH Attempts")
 listening_ports = read_metric(network_file, "Listening Ports")
 running_services = read_metric(system_file, "Running Services")
 suid_count = read_metric(system_file, "SUID Binaries")
 
 
+# -----------------------------
 # Threat Campaign Engine
+# -----------------------------
 CAMPAIGN_FILE = f"{ARTIFACT_ROOT}/threats/campaign_state.json"
 
 if os.path.exists(CAMPAIGN_FILE):
@@ -53,21 +54,11 @@ campaign = campaign_data["active_campaign"]
 duration = campaign_data["duration"]
 
 if campaign is None:
-
-    roll = random.randint(1,100)
-
-    if roll > 85:
-        campaign = random.choice([
-            "BRUTE_FORCE",
-            "LATERAL_MOVEMENT",
-            "PERSISTENCE",
-            "PRIV_ESC"
-        ])
+    if random.randint(1,100) > 85:
+        campaign = random.choice(["BRUTE_FORCE","LATERAL_MOVEMENT","PERSISTENCE","PRIV_ESC"])
         duration = random.randint(2,5)
-
 else:
     duration -= 1
-
     if duration <= 0:
         campaign = None
 
@@ -77,22 +68,20 @@ campaign_data["duration"] = duration
 with open(CAMPAIGN_FILE,"w") as f:
     json.dump(campaign_data,f,indent=2)
 
-
 # Apply campaign effects
 if campaign == "BRUTE_FORCE":
     failed_ssh += random.randint(25,80)
-
 elif campaign == "LATERAL_MOVEMENT":
     listening_ports += random.randint(5,15)
-
 elif campaign == "PERSISTENCE":
     running_services += random.randint(10,30)
-
 elif campaign == "PRIV_ESC":
     suid_count += random.randint(5,15)
 
 
+# -----------------------------
 # IOC Engine
+# -----------------------------
 IOC_DIR = f"{ARTIFACT_ROOT}/ioc"
 os.makedirs(IOC_DIR, exist_ok=True)
 
@@ -100,31 +89,24 @@ ioc_list = []
 
 if failed_ssh > 20:
     ioc_list.append(f"{TODAY} | Credential Attack Pattern | SSH failures: {failed_ssh}")
-
 if listening_ports > 15:
     ioc_list.append(f"{TODAY} | Network Exposure | Listening ports: {listening_ports}")
-
 if suid_count > 30:
     ioc_list.append(f"{TODAY} | Privilege Escalation Surface | SUID binaries: {suid_count}")
-
 if running_services > 60:
     ioc_list.append(f"{TODAY} | Persistence Indicator | Services running: {running_services}")
 
-
-IOC_FILE = f"{IOC_DIR}/ioc_{TODAY}.txt"
-
 if ioc_list:
-    with open(IOC_FILE, "w") as f:
-        for i in ioc_list:
-            f.write(i + "\n")
+    with open(f"{IOC_DIR}/ioc_{TODAY}.txt", "w") as f:
+        f.write("\n".join(ioc_list))
 
 ioc_count = len(ioc_list)
 
 
-# Risk Calculation (more dynamic)
+# -----------------------------
+# Risk Engine
+# -----------------------------
 base_risk = (failed_ssh * 4) + (listening_ports * 2.5) + (suid_count * 2)
-
-# Introduce volatility (simulation realism)
 volatility = random.randint(-10, 25)
 
 previous_risk = 0
@@ -133,14 +115,15 @@ if os.path.exists(STATE_FILE):
         previous_risk = json.load(f).get("risk_score", 0)
 
 risk_score = (previous_risk * 0.3) + (base_risk * 0.7) + volatility
-risk_score = max(0, round(risk_score, 1))  # prevent negatives
+risk_score = max(0, round(risk_score, 1))
 
 exposure_index = round(risk_score * 1.2, 1)
 
 
+# -----------------------------
 # Containment Stage
+# -----------------------------
 def determine_stage(score):
-
     if score < 40:
         return "GREEN","🟢"
     elif score < 100:
@@ -150,69 +133,90 @@ def determine_stage(score):
     else:
         return "RED","🔴"
 
-
 current_stage,stage_emoji = determine_stage(risk_score)
 
 
-# Investigation Stage Engine
+# -----------------------------
+# Investigation Path
+# -----------------------------
 def investigation_stage():
-
-    path = []
+    path = ["1️⃣ Host Security Posture Evaluation"]
     reason = ""
-
-    path.append("1️⃣ Host Security Posture Evaluation")
 
     if failed_ssh > 15:
         path.append("2️⃣ Authentication Abuse Analysis")
-        reason = f"Elevated SSH authentication failures detected ({failed_ssh}). Possible credential brute force activity."
+        reason = f"Elevated SSH failures ({failed_ssh}) detected."
 
     if risk_score > 80:
         path.append("3️⃣ Exposure Validation")
-        reason = f"Risk score elevated ({risk_score}). Telemetry anomalies require exposure validation."
+        reason = f"Risk score elevated ({risk_score})."
 
     if listening_ports > 10:
         path.append("6️⃣ Propagation Modeling")
-        reason = f"Unusual number of listening ports detected ({listening_ports}). Possible lateral exposure surface."
 
     if running_services > 50:
         path.append("8️⃣ Persistence Detection")
-        reason = f"High service density observed ({running_services}). Possible persistence mechanisms active."
 
     if suid_count > 25:
         path.append("9️⃣ Privilege Escalation Review")
-        reason = f"Elevated SUID binary count detected ({suid_count}). Potential privilege escalation surface."
 
     if len(path) == 1:
-        reason = (
-            "Telemetry baseline indicates stable host conditions. "
-            "No authentication anomalies, abnormal service density, "
-            "or privilege escalation indicators detected during this run."
-        )
+        reason = "System operating within baseline thresholds."
 
     return path, reason
-
 
 investigation_path, stage_reason = investigation_stage()
 investigation = "\n".join(investigation_path)
 
 
+# -----------------------------
 # Threat Intelligence
+# -----------------------------
 threats = []
 
 if failed_ssh > 25:
     threats.append("[HIGH] SSH brute force activity suspected")
-
 if listening_ports > 20:
-    threats.append("[MEDIUM] Unusual number of exposed network ports")
-
+    threats.append("[MEDIUM] Exposed network surface increase")
 if suid_count > 40:
-    threats.append("[HIGH] Elevated privilege escalation surface")
-
+    threats.append("[HIGH] Privilege escalation surface elevated")
 if running_services > 70:
-    threats.append("[MEDIUM] Abnormally dense service environment")
+    threats.append("[MEDIUM] Service persistence risk")
 
 
-# 14 Run Trend Engine (rolling window)
+# -----------------------------
+# NEW: Containment Directive (10/10 feature)
+# -----------------------------
+actions = []
+
+if failed_ssh > 15:
+    actions.append("Investigate SSH logs and block offending IPs")
+
+if listening_ports > 10:
+    actions.append("Audit exposed ports and restrict unnecessary services")
+
+if running_services > 50:
+    actions.append("Review running services for persistence mechanisms")
+
+if suid_count > 25:
+    actions.append("Audit SUID binaries for privilege escalation risks")
+
+if not actions:
+    actions.append("Maintain baseline monitoring and continue observation")
+
+priority_map = {
+    "GREEN": "LOW",
+    "YELLOW": "MEDIUM",
+    "ORANGE": "HIGH",
+    "RED": "CRITICAL"
+}
+
+priority = priority_map[current_stage]
+
+
+# -----------------------------
+# Trend Engine (rolling 14 runs)
+# -----------------------------
 trend_file = "artifacts/system/risk_history.log"
 
 if not os.path.exists(trend_file):
@@ -221,86 +225,31 @@ if not os.path.exists(trend_file):
 with open(trend_file, "r") as f:
     lines = [l.strip() for l in f.readlines() if "," in l]
 
-# Unique timestamp per run (this is what allows 2 runs/day)
 timestamp = f"{TODAY}_{random.randint(1000,9999)}"
-
 lines.append(f"{timestamp},{risk_score},{current_stage}")
-
-# Keep ONLY last 14 runs (rolling window)
 lines = lines[-14:]
 
 with open(trend_file, "w") as f:
     f.write("\n".join(lines) + "\n")
 
-emoji_map = {
-    "GREEN": "🟢",
-    "YELLOW": "🟡",
-    "ORANGE": "🟠",
-    "RED": "🔴"
-}
+emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
 
 trend_output = ""
-
 for i, line in enumerate(lines, 1):
-    parts = line.split(",")
-    if len(parts) != 3:
-        continue
-
-    d, s, st = parts
-
-    # Clean date display (remove random suffix)
-    date_display = d.split("_")[0]
-
-    trend_output += f"- Day {i} | {date_display} | {emoji_map[st]} {s} ({st})\n"
+    d,s,st = line.split(",")
+    trend_output += f"- Day {i} | {d.split('_')[0]} | {emoji_map[st]} {s} ({st})\n"
 
 
-# Incident Log
-incident_file="analysis/runtime/incidents.log"
-
-if not os.path.exists(incident_file):
-    open(incident_file,"w").close()
-
-if risk_score>=100:
-
-    with open(incident_file,"a") as f:
-        f.write(f"INC-{TODAY} | {stage_emoji} {current_stage} | Stage: {investigation} | Risk: {risk_score}\n")
-
-
-with open(incident_file) as f:
-    incidents=f.readlines()[-10:]
-
-
-incident_output=""
-
-if incidents:
-    for i in incidents:
-        incident_output+=f"- {i}"
-else:
-    incident_output="No containment incidents recorded during the current analysis window."
-
-
+# -----------------------------
 # Save State
+# -----------------------------
 with open(STATE_FILE,"w") as f:
     json.dump({"risk_score":risk_score},f,indent=2)
 
 
-# Containment Interpretation
-interpretation = ""
-
-if current_stage == "GREEN":
-    interpretation = "Host telemetry indicates a stable security posture with no evidence of active compromise propagation."
-
-elif current_stage == "YELLOW":
-    interpretation = "Early anomaly signals detected. Telemetry indicates possible authentication or exposure irregularities requiring observation."
-
-elif current_stage == "ORANGE":
-    interpretation = "Sustained intrusion indicators present. Host investigation recommended to evaluate persistence or lateral movement activity."
-
-elif current_stage == "RED":
-    interpretation = "Critical compromise condition detected. Immediate containment and host isolation procedures recommended."
-
-
+# -----------------------------
 # Dashboard
+# -----------------------------
 dashboard=f"""
 <!-- CVX-REPORT-START -->
 
@@ -308,9 +257,6 @@ dashboard=f"""
 
 **Date:** {TODAY}  
 **Containment Stage:** {stage_emoji} {current_stage}
-
-**Interpretation:**  
-{interpretation}
 
 **Risk Score:** {risk_score}  
 **Exposure Index:** {exposure_index}
@@ -333,30 +279,23 @@ dashboard=f"""
 ---
 
 ## 🦠 Threat Intelligence
-{chr(10).join(f"- {t}" for t in threats) if threats else "No active threat signatures detected. Telemetry patterns do not currently match known intrusion or propagation behaviors."}
+{chr(10).join(f"- {t}" for t in threats) if threats else "No active threat signatures detected."}
 
 ---
 
-## 🔎 Indicators of Compromise (IOC)
-{ioc_count} indicators generated today.
+## 🚨 Containment Directive
+{chr(10).join(f"- {a}" for a in actions)}
 
-Telemetry analysis reviewed authentication activity, service exposure patterns, and privilege escalation surfaces.
+**Operational Priority:** {priority}
 
 ---
 
 ## 📈 Containment Risk Timeline (14 Runs)
 {trend_output}
 
----
-
-## 📂 Incident Log
-{incident_output}
-
 <!-- CVX-REPORT-END -->
 """
 
-
-# Inject into README
 with open("README.md") as f:
     content=f.read()
 
@@ -364,15 +303,11 @@ start="<!-- CVX-REPORT-START -->"
 end="<!-- CVX-REPORT-END -->"
 
 if start in content and end in content:
-
     before=content.split(start)[0]
     after=content.split(end)[1]
-
     new_content=before+dashboard+after
-
 else:
     new_content=content+dashboard
-
 
 with open("README.md","w") as f:
     f.write(new_content)
