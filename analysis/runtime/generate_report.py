@@ -121,19 +121,21 @@ if ioc_list:
 ioc_count = len(ioc_list)
 
 
-# Risk Calculation
-base_risk = (failed_ssh * 3) + (listening_ports * 2) + (suid_count * 1.5)
+# Risk Calculation (more dynamic)
+base_risk = (failed_ssh * 4) + (listening_ports * 2.5) + (suid_count * 2)
+
+# Introduce volatility (simulation realism)
+volatility = random.randint(-10, 25)
 
 previous_risk = 0
-
 if os.path.exists(STATE_FILE):
     with open(STATE_FILE) as f:
-        previous_risk = json.load(f).get("risk_score",0)
+        previous_risk = json.load(f).get("risk_score", 0)
 
-risk_score = (previous_risk * 0.4) + (base_risk * 0.6)
-risk_score = round(risk_score,1)
+risk_score = (previous_risk * 0.3) + (base_risk * 0.7) + volatility
+risk_score = max(0, round(risk_score, 1))  # prevent negatives
 
-exposure_index = round(risk_score * 1.15,1)
+exposure_index = round(risk_score * 1.2, 1)
 
 
 # Containment Stage
@@ -210,42 +212,44 @@ if running_services > 70:
     threats.append("[MEDIUM] Abnormally dense service environment")
 
 
-# 14 Day Trend Engine
+# 14 Run Trend Engine (rolling window)
 trend_file = "artifacts/system/risk_history.log"
 
 if not os.path.exists(trend_file):
-    open(trend_file,"w").close()
+    open(trend_file, "w").close()
 
-with open(trend_file,"r") as f:
-    lines = f.readlines()
+with open(trend_file, "r") as f:
+    lines = [l.strip() for l in f.readlines() if "," in l]
 
-timestamp = f"{TODAY}-{random.randint(1000,9999)}"
-lines.append(f"{timestamp},{risk_score},{current_stage}\n")
+# Unique timestamp per run (this is what allows 2 runs/day)
+timestamp = f"{TODAY}_{random.randint(1000,9999)}"
 
+lines.append(f"{timestamp},{risk_score},{current_stage}")
+
+# Keep ONLY last 14 runs (rolling window)
 lines = lines[-14:]
 
-with open(trend_file,"w") as f:
-    f.writelines(lines)
+with open(trend_file, "w") as f:
+    f.write("\n".join(lines) + "\n")
 
-
-emoji_map={
-"GREEN":"🟢",
-"YELLOW":"🟡",
-"ORANGE":"🟠",
-"RED":"🔴"
+emoji_map = {
+    "GREEN": "🟢",
+    "YELLOW": "🟡",
+    "ORANGE": "🟠",
+    "RED": "🔴"
 }
 
-trend_output=""
+trend_output = ""
 
-for i,line in enumerate(lines[-14:],1):
-
-    parts = line.strip().split(",")
-
+for i, line in enumerate(lines, 1):
+    parts = line.split(",")
     if len(parts) != 3:
         continue
 
-    d,s,st = parts
-    date_display = "-".join(d.split("-")[:3])
+    d, s, st = parts
+
+    # Clean date display (remove random suffix)
+    date_display = d.split("_")[0]
 
     trend_output += f"- Day {i} | {date_display} | {emoji_map[st]} {s} ({st})\n"
 
