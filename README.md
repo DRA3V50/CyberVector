@@ -25,16 +25,28 @@ Telemetry analysis determines the current **containment stage** and produces ope
 ---
 <h3 align="center">🚦 Containment Alert Levels</h3>
 
-<p align="center">
-
-| Level | Status |
-|------|------|
-| 🟢 GREEN | Normal host activity |
-| 🟡 YELLOW | Early anomaly signals detected |
-| 🟠 ORANGE | Sustained intrusion indicators present |
-| 🔴 RED | Critical compromise condition |
-
-</p>
+<table align="center">
+  <tr>
+    <th>Level</th>
+    <th>Status</th>
+  </tr>
+  <tr>
+    <td>🟢 GREEN</td>
+    <td>Normal host activity</td>
+  </tr>
+  <tr>
+    <td>🟡 YELLOW</td>
+    <td>Early anomaly signals detected</td>
+  </tr>
+  <tr>
+    <td>🟠 ORANGE</td>
+    <td>Sustained intrusion indicators present</td>
+  </tr>
+  <tr>
+    <td>🔴 RED</td>
+    <td>Critical compromise condition</td>
+  </tr>
+</table>
 ---
 
 # 🧬 Compromise Propagation Map
