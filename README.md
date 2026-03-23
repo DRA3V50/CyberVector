@@ -24,7 +24,7 @@ Telemetry analysis determines the current **containment stage** and produces ope
 
 ---
 
-#🚦 Containment Alert Levels 
+# 🚦 Containment Alert Levels 
 | Level | Status | 
 |------|------| 
 | 🟢 GREEN | Normal host activity | 
