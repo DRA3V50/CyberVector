@@ -303,7 +303,7 @@ dashboard=f"""
 
 ---
 
-## 🧪 Investigation Stage
+## 📋 Investigation Stage
 {investigation}
 
 **Reason:** {stage_reason}
