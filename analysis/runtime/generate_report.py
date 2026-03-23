@@ -310,7 +310,7 @@ dashboard=f"""
 
 ---
 
-## 📊 Telemetry Snapshot
+## 🗂️ Telemetry Snapshot
 - Failed SSH Attempts: {failed_ssh}
 - Listening Ports: {listening_ports}
 - Running Services: {running_services}
@@ -328,7 +328,7 @@ dashboard=f"""
 
 ---
 
-## 🚨 Containment Directive
+## ⚠️ Containment Directive
 
 **Operational Assessment:**  
 {directive_summary}
