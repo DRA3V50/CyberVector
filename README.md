@@ -24,7 +24,7 @@ Telemetry analysis determines the current **containment stage** and produces ope
 
 ---
 
-# 🚦 Containment Alert Levels
+<p align="center"># 🚦 Containment Alert Levels
 
 | Level | Status |
 |------|------|
@@ -32,7 +32,7 @@ Telemetry analysis determines the current **containment stage** and produces ope
 | 🟡 YELLOW | Early anomaly signals detected |
 | 🟠 ORANGE | Sustained intrusion indicators present |
 | 🔴 RED | Critical compromise condition |
-
+</p>
 ---
 
 # 🧬 Compromise Propagation Map
