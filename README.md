@@ -23,19 +23,18 @@ Rather than treating intrusions as isolated technical failures, the platform eva
 Telemetry analysis determines the current **containment stage** and produces operational guidance aligned with structured response frameworks.
 
 ---
-<h3>
-<p align="center">🚦 Containment Alert Levels
-</h3>
-<h2>
+<h3 align="center">🚦 Containment Alert Levels</h3>
+
+<p align="center">
+
 | Level | Status |
 |------|------|
 | 🟢 GREEN | Normal host activity |
 | 🟡 YELLOW | Early anomaly signals detected |
 | 🟠 ORANGE | Sustained intrusion indicators present |
 | 🔴 RED | Critical compromise condition |
-</p>
-</h2>
 
+</p>
 ---
 
 # 🧬 Compromise Propagation Map
