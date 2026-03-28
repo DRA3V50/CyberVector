@@ -135,6 +135,8 @@ Early-stage anomaly indicators detected. While no confirmed compromise is presen
 - Day 13 | 2026-03-28 | 🟡 58.6 (YELLOW)
 - Day 14 | 2026-03-28 | 🟡 61.0 (YELLOW)
 
+## 🔄 Containment State Changes
+- Initial baseline established
 
 <!-- CVX-REPORT-END -->
 
