@@ -110,17 +110,18 @@ def determine_stage(score):
 current_stage,stage_emoji = determine_stage(risk_score)
 
 # -----------------------------
-# STATE CHANGE ENGINE (NEW 🔥)
+# STATE CHANGE ENGINE (FIXED 🔥)
 # -----------------------------
 stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
 
+# Ensure file exists
 if not os.path.exists(STATE_HISTORY_FILE):
-    open(STATE_HISTORY_FILE,"w").close()
+    with open(STATE_HISTORY_FILE,"w") as f:
+        pass
 
+# Read safely (FIX: no destructive filtering)
 with open(STATE_HISTORY_FILE,"r") as f:
-    state_lines = [l.strip() for l in f.readlines() if "|" in l]
-
-change_entry = None
+    state_lines = [l.strip() for l in f.readlines() if l.strip()]
 
 if previous_stage:
     prev = stage_levels[previous_stage]
@@ -137,9 +138,15 @@ if previous_stage:
 else:
     change_entry = f"{TODAY} | {stage_emoji} {current_stage} (Initial State)"
 
-state_lines.append(change_entry)
-state_lines = state_lines[-10:]
+# Prevent duplicate same-run entries (IMPORTANT FIX)
+if not state_lines or state_lines[-1] != change_entry:
+    state_lines.append(change_entry)
 
+# Keep last 10 entries (rolling history)
+if len(state_lines) > 10:
+    state_lines = state_lines[-10:]
+
+# Write back properly
 with open(STATE_HISTORY_FILE,"w") as f:
     f.write("\n".join(state_lines) + "\n")
 
