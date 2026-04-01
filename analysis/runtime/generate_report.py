@@ -162,6 +162,33 @@ with open(STATE_FILE,"w") as f:
     },f,indent=2)
 
 # -----------------------------
+# Trend Engine (RESTORE THIS)
+# -----------------------------
+trend_file = f"{ARTIFACT_ROOT}/system/risk_history.log"
+
+if not os.path.exists(trend_file):
+    open(trend_file, "w").close()
+
+with open(trend_file, "r") as f:
+    trend_lines = [l.strip() for l in f.readlines() if "," in l]
+
+timestamp = f"{TODAY}_{random.randint(1000,9999)}"
+trend_lines.append(f"{timestamp},{risk_score},{current_stage}")
+
+# KEEP last 14 runs (THIS is what you lost)
+trend_lines = trend_lines[-14:]
+
+with open(trend_file, "w") as f:
+    f.write("\n".join(trend_lines) + "\n")
+
+emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
+
+trend_output = ""
+for i, line in enumerate(trend_lines, 1):
+    d,s,st = line.split(",")
+    trend_output += f"- Day {i} | {d.split('_')[0]} | {emoji_map[st]} {s} ({st})\n"
+
+# -----------------------------
 # Dashboard
 # -----------------------------
 dashboard=f"""
