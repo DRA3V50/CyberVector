@@ -232,7 +232,7 @@ dashboard=f"""
 
 ---
 
-## 📈 Containment Risk Timeline (14 Runs)
+## 📈 Containment Risk Timeline (14 Days)
 {trend_output}
 
 <!-- CVX-REPORT-END -->
