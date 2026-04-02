@@ -170,7 +170,11 @@ with open(trend_file, "r") as f:
 timestamp = f"{TODAY}_{random.randint(1000,9999)}"
 
 if trend_lines:
-    _, _, prev_stage, _ = trend_lines[-1].split(",")
+    parts = trend_lines[-1].split(",")
+    if len(parts) >= 3:
+        prev_stage = parts[2]
+    else:
+        prev_stage = current_stage
 else:
     prev_stage = current_stage
 
