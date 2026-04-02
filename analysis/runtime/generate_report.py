@@ -204,7 +204,7 @@ emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
 trend_output = ""
 for i, line in enumerate(trend_lines, 1):
     # Determine transition vs previous entry
-if trend_lines:
+    if trend_lines:
     _, _, prev_stage = trend_lines[-1].split(",")
 else:
     prev_stage = current_stage
