@@ -157,7 +157,7 @@ with open(STATE_FILE,"w") as f:
     },f,indent=2)
 
 # -----------------------------
-# Trend Engine with Escalation Narrative
+# Trend Engine
 # -----------------------------
 trend_file = f"{ARTIFACT_ROOT}/system/risk_history.log"
 
@@ -171,9 +171,14 @@ timestamp = f"{TODAY}_{random.randint(1000,9999)}"
 
 if trend_lines:
     parts = trend_lines[-1].split(",")
-    prev_stage = parts[2] if len(parts) >= 3 else current_stage
+    if len(parts) >= 3:
+        prev_stage = parts[2]
+    else:
+        prev_stage = current_stage
 else:
     prev_stage = current_stage
+
+stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
 
 prev_lvl = stage_levels.get(prev_stage, 1)
 curr_lvl = stage_levels[current_stage]
@@ -185,28 +190,23 @@ elif curr_lvl < prev_lvl:
 else:
     transition = "Maintained"
 
-trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition}")
+# -----------------------------
+# Compromise Propagation Map
+# -----------------------------
+propagation_map = {
+    "GREEN": "1️⃣ Host Security Posture Evaluation",
+    "YELLOW": "2️⃣ Authentication Abuse Analysis",
+    "ORANGE": "5️⃣ Compromise Simulation",
+    "RED": "9️⃣ Privilege Escalation Review"
+}
+map_step = propagation_map.get(current_stage, "🔄 Containment Re-Validation Cycle")
+
+trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition},{map_step}")
 
 trend_lines = trend_lines[-14:]
 
 with open(trend_file, "w") as f:
     f.write("\n".join(trend_lines) + "\n")
-
-# -----------------------------
-# Build Trend Output with Propagation Map
-# -----------------------------
-propagation_map = [
-    "1️⃣ Host Security Posture Evaluation",
-    "2️⃣ Authentication Abuse Analysis",
-    "3️⃣ Exposure Validation",
-    "4️⃣ Patch Intelligence",
-    "5️⃣ Compromise Simulation",
-    "6️⃣ Propagation Modeling",
-    "7️⃣ Lateral Movement Analysis",
-    "8️⃣ Persistence Detection",
-    "9️⃣ Privilege Escalation Review",
-    "🔄 Containment Re-Validation Cycle"
-]
 
 emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
 
@@ -214,16 +214,16 @@ trend_output = ""
 for line in trend_lines:
     parts = line.split(",")
 
-    if len(parts) >= 4:
+    if len(parts) >= 5:
+        ts, score, stage, transition, map_step = parts
+    elif len(parts) == 4:
         ts, score, stage, transition = parts
-    elif len(parts) == 3:
-        ts, score, stage = parts
-        transition = "Maintained"
+        map_step = "🔄 Containment Re-Validation Cycle"
     else:
         continue
 
     emoji = emoji_map.get(stage, "")
-    trend_output += f"- {ts} | {emoji} {stage} | Risk {score} | {transition}\n"
+    trend_output += f"- {ts} | {emoji} {stage} | Risk {score} | {transition} | {map_step}\n"
 
 # -----------------------------
 # Dashboard
@@ -254,8 +254,8 @@ dashboard=f"""
 with open("README.md") as f:
     content=f.read()
 
-start="<!-- CVX-REPORT-START -->"
-end="<!-- CVX-REPORT-END -->"
+start="<!-- CVX-REPORT-START-->"
+end="<!-- CVX-REPORT-END-->"
 
 if start in content and end in content:
     before=content.split(start)[0]
