@@ -2,8 +2,8 @@ name: CyberVector Host Containment
 
 on:
   schedule:
-  - cron: '0 13 * * *'   # 8AM EST
-  - cron: '0 1 * * *'    # 8PM EST
+    - cron: '0 13 * * *'   # 8AM EST
+    - cron: '0 1 * * *'    # 8PM EST
   workflow_dispatch:
 
 jobs:
@@ -14,8 +14,11 @@ jobs:
       contents: write
 
     steps:
+      # ✅ FIX 1: (CRITICAL)
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -25,7 +28,6 @@ jobs:
       # -----------------------------
       # Phase I – Runtime Collection
       # -----------------------------
-
       - name: Run Auth Collector
         run: bash analysis/runtime/collect_auth.sh
 
@@ -38,21 +40,22 @@ jobs:
       # -----------------------------
       # Phase II – Tooling Layer
       # -----------------------------
-
       - name: Run Patch Audit
         run: bash tools/patch_audit.sh
 
       # -----------------------------
       # Phase III – Generate README Dashboard
       # -----------------------------
-
       - name: Generate Runtime Report
         run: python analysis/runtime/generate_report.py
+
+      # ✅ FIX 2: PULL BEFORE COMMIT (CRITICAL)
+      - name: Pull latest changes
+        run: git pull origin main
 
       # -----------------------------
       # Commit Only What Matters
       # -----------------------------
-
       - name: Commit updates
         run: |
           git config --local user.email "actions@github.com"
