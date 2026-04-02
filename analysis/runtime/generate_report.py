@@ -201,7 +201,16 @@ emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
 
 trend_output = ""
 for i, line in enumerate(trend_lines, 1):
-    ts, score, stage, transition = line.split(",")
+    parts = line.split(",")
+
+    if len(parts) >= 4:
+        ts, score, stage, transition = parts
+    elif len(parts) == 3:
+        ts, score, stage = parts
+        transition = "Maintained"
+    else:
+        continue
+
     emoji = emoji_map.get(stage, "")
     trend_output += f"- Run {i}: {emoji} {stage} | Risk {score} | {transition}\n"
 
