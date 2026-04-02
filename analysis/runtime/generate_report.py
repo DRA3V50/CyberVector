@@ -210,10 +210,10 @@ propagation_map = [
 
 emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
 
-trend_output_lines = []
-
-for i, line in enumerate(trend_lines, 1):
+trend_output = ""
+for line in trend_lines:
     parts = line.split(",")
+
     if len(parts) >= 4:
         ts, score, stage, transition = parts
     elif len(parts) == 3:
@@ -222,28 +222,8 @@ for i, line in enumerate(trend_lines, 1):
     else:
         continue
 
-    score = float(score)
     emoji = emoji_map.get(stage, "")
-    curr_lvl = stage_levels.get(stage, 1)
-
-    # Map stage to propagation step
-    phase_index = min(len(propagation_map)-1, curr_lvl * 2 - 2 + (i % 2))
-    phase_name = propagation_map[phase_index]
-
-    if transition == "Escalation":
-        narrative = f"⬆️ Escalated to {phase_name}"
-    elif transition == "Containment":
-        narrative = f"⬇️ Contained, moved back from {phase_name}"
-    elif stage == "GREEN" and prev_stage != "GREEN":
-        narrative = f"✅ Threat neutralized, host returning to baseline ({phase_name})"
-    else:
-        narrative = f"➡️ Maintained at {phase_name}"
-
-    trend_output_lines.append(
-        f"- Run {i}: {emoji} {stage} | Risk {score}\n  ↳ Status: {narrative}"
-    )
-
-trend_output = "\n".join(trend_output_lines)
+    trend_output += f"- {ts} | {emoji} {stage} | Risk {score} | {transition}\n"
 
 # -----------------------------
 # Dashboard
