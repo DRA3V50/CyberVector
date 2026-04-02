@@ -157,7 +157,7 @@ with open(STATE_FILE,"w") as f:
     },f,indent=2)
 
 # -----------------------------
-# Trend Engine
+# Trend Engine (Day 1 → Day 14, oldest → newest)
 # -----------------------------
 trend_file = f"{ARTIFACT_ROOT}/system/risk_history.log"
 
@@ -178,8 +178,6 @@ if trend_lines:
 else:
     prev_stage = current_stage
 
-stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
-
 prev_lvl = stage_levels.get(prev_stage, 1)
 curr_lvl = stage_levels[current_stage]
 
@@ -190,40 +188,29 @@ elif curr_lvl < prev_lvl:
 else:
     transition = "Maintained"
 
-# -----------------------------
-# Compromise Propagation Map
-# -----------------------------
-propagation_map = {
-    "GREEN": "1️⃣ Host Security Posture Evaluation",
-    "YELLOW": "2️⃣ Authentication Abuse Analysis",
-    "ORANGE": "5️⃣ Compromise Simulation",
-    "RED": "9️⃣ Privilege Escalation Review"
-}
-map_step = propagation_map.get(current_stage, "🔄 Containment Re-Validation Cycle")
+# Map stage placeholder, could be updated per simulation logic
+map_stage = "🔄 Containment Re-Validation Cycle"
 
-trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition},{map_step}")
+trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition},{map_stage}")
 
-trend_lines = trend_lines[-14:]
+trend_lines = trend_lines[-14:]  # keep last 14 days
 
-with open(trend_file, "w") as f:
-    f.write("\n".join(trend_lines) + "\n")
-
+# Build trend output exactly like original style (Day 1…Day 14)
 emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
 
 trend_output = ""
-for line in trend_lines:
+for i, line in enumerate(trend_lines, 1):  # Day 1 = oldest
+    day_label = f"Day {i}"
     parts = line.split(",")
-
     if len(parts) >= 5:
-        ts, score, stage, transition, map_step = parts
+        ts, score, stage, transition, map_stage = parts
     elif len(parts) == 4:
         ts, score, stage, transition = parts
-        map_step = "🔄 Containment Re-Validation Cycle"
+        map_stage = "🔄 Containment Re-Validation Cycle"
     else:
         continue
-
     emoji = emoji_map.get(stage, "")
-    trend_output += f"- {ts} | {emoji} {stage} | Risk {score} | {transition} | {map_step}\n"
+    trend_output += f"- {day_label}: {emoji} {stage} | Risk {score} | {transition} | {map_stage} | {ts}\n"
 
 # -----------------------------
 # Dashboard
