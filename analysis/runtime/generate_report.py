@@ -154,14 +154,19 @@ if not os.path.exists(trend_file):
 with open(trend_file,"r") as f:
     trend_lines = [l.strip() for l in f.readlines() if l.strip()]
 
-# Migrate old entries with only 3 fields
-new_trend_lines = []
+# Normalize all existing lines to 5 fields
+normalized_lines = []
 for line in trend_lines:
     parts = line.split(",")
-    if len(parts) == 3:
-        parts += ["Maintained",""]
-    new_trend_lines.append(",".join(parts))
-trend_lines = new_trend_lines
+    while len(parts) < 5:
+        # Fill missing fields with default values
+        if len(parts) == 3:
+            parts += ["Maintained",""]
+        elif len(parts) == 4:
+            parts += [""]
+    normalized_lines.append(",".join(parts))
+
+trend_lines = normalized_lines
 
 timestamp = f"{TODAY}_{random.randint(1000,9999)}"
 
@@ -189,6 +194,11 @@ trend_lines = trend_lines[-14:]
 
 with open(trend_file,"w") as f:
     f.write("\n".join(trend_lines)+"\n")
+
+trend_output = ""
+for i, line in enumerate(trend_lines,1):
+    ts, score, stage, transition, map_stage = line.split(",")
+    trend_output += f"Day {i}: {map_stage} {stage} | Risk {score} | {transition} \n"
 
 trend_output = ""
 for i, line in enumerate(trend_lines,1):
