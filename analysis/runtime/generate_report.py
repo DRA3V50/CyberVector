@@ -114,12 +114,10 @@ current_stage,stage_emoji = determine_stage(risk_score)
 # -----------------------------
 stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
 
-# Ensure file exists
 if not os.path.exists(STATE_HISTORY_FILE):
     with open(STATE_HISTORY_FILE,"w") as f:
         pass
 
-# Read safely (FIX: no destructive filtering)
 with open(STATE_HISTORY_FILE,"r") as f:
     state_lines = [l.strip() for l in f.readlines() if l.strip()]
 
@@ -138,15 +136,12 @@ if previous_stage:
 else:
     change_entry = f"{TODAY} | {stage_emoji} {current_stage} (Initial State)"
 
-# Prevent duplicate same-run entries (IMPORTANT FIX)
 if not state_lines or state_lines[-1] != change_entry:
     state_lines.append(change_entry)
 
-# Keep last 10 entries (rolling history)
 if len(state_lines) > 10:
     state_lines = state_lines[-10:]
 
-# Write back properly
 with open(STATE_HISTORY_FILE,"w") as f:
     f.write("\n".join(state_lines) + "\n")
 
@@ -162,7 +157,7 @@ with open(STATE_FILE,"w") as f:
     },f,indent=2)
 
 # -----------------------------
-# Trend Engine (RESTORE THIS)
+# Trend Engine
 # -----------------------------
 trend_file = f"{ARTIFACT_ROOT}/system/risk_history.log"
 
@@ -173,9 +168,9 @@ with open(trend_file, "r") as f:
     trend_lines = [l.strip() for l in f.readlines() if "," in l]
 
 timestamp = f"{TODAY}_{random.randint(1000,9999)}"
-# Determine transition vs previous entry
+
 if trend_lines:
-    _, _, prev_stage = trend_lines[-1].split(",")
+    _, _, prev_stage, _ = trend_lines[-1].split(",")
 else:
     prev_stage = current_stage
 
@@ -193,7 +188,6 @@ else:
 
 trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition}")
 
-# KEEP last 14 runs (THIS is what you lost)
 trend_lines = trend_lines[-14:]
 
 with open(trend_file, "w") as f:
@@ -203,25 +197,9 @@ emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
 
 trend_output = ""
 for i, line in enumerate(trend_lines, 1):
-    # Determine transition vs previous entry
-    if trend_lines:
-    _, _, prev_stage = trend_lines[-1].split(",")
-else:
-    prev_stage = current_stage
-
-stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
-
-prev_lvl = stage_levels.get(prev_stage, 1)
-curr_lvl = stage_levels[current_stage]
-
-if curr_lvl > prev_lvl:
-    transition = "Escalation"
-elif curr_lvl < prev_lvl:
-    transition = "Containment"
-else:
-    transition = "Maintained"
-
-trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition}")
+    ts, score, stage, transition = line.split(",")
+    emoji = emoji_map.get(stage, "")
+    trend_output += f"- Run {i}: {emoji} {stage} | Risk {score} | {transition}\n"
 
 # -----------------------------
 # Dashboard
