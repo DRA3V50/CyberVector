@@ -9,6 +9,7 @@ TODAY = date.today().isoformat()
 ARTIFACT_ROOT = "artifacts"
 STATE_FILE = f"{ARTIFACT_ROOT}/system/state.json"
 STATE_HISTORY_FILE = f"{ARTIFACT_ROOT}/system/state_changes.log"
+TREND_FILE = f"{ARTIFACT_ROOT}/system/risk_history.log"
 
 INCIDENT_DIR = f"{ARTIFACT_ROOT}/incidents"
 THREAT_DIR = f"{ARTIFACT_ROOT}/threats"
@@ -26,7 +27,10 @@ def read_metric(file_path, key):
     with open(file_path) as f:
         for line in f:
             if key in line:
-                return int(line.split(":")[1].strip())
+                try:
+                    return int(line.split(":")[1].strip())
+                except ValueError:
+                    return 0
     return 0
 
 auth_file = f"{ARTIFACT_ROOT}/auth/auth_{TODAY}.log"
@@ -39,7 +43,7 @@ running_services = read_metric(system_file, "Running Services")
 suid_count = read_metric(system_file, "SUID Binaries")
 
 # -----------------------------
-# Campaign Engine (UNCHANGED)
+# Campaign Engine
 # -----------------------------
 CAMPAIGN_FILE = f"{ARTIFACT_ROOT}/threats/campaign_state.json"
 
@@ -53,7 +57,7 @@ campaign = campaign_data["active_campaign"]
 duration = campaign_data["duration"]
 
 if campaign is None:
-    if random.randint(1,100) > 85:
+    if random.randint(1, 100) > 85:
         campaign = random.choice(["BRUTE_FORCE","LATERAL_MOVEMENT","PERSISTENCE","PRIV_ESC"])
         duration = random.randint(2,5)
 else:
@@ -91,8 +95,7 @@ if os.path.exists(STATE_FILE):
         previous_risk = data.get("risk_score", 0)
         previous_stage = data.get("stage", None)
 
-risk_score = (previous_risk * 0.3) + (base_risk * 0.7) + volatility
-risk_score = max(0, round(risk_score, 1))
+risk_score = max(0, round((previous_risk * 0.3) + (base_risk * 0.7) + volatility,1))
 
 # -----------------------------
 # Stage
@@ -107,7 +110,7 @@ def determine_stage(score):
     else:
         return "RED","🔴"
 
-current_stage,stage_emoji = determine_stage(risk_score)
+current_stage, stage_emoji = determine_stage(risk_score)
 
 # -----------------------------
 # STATE CHANGE ENGINE
@@ -115,8 +118,7 @@ current_stage,stage_emoji = determine_stage(risk_score)
 stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
 
 if not os.path.exists(STATE_HISTORY_FILE):
-    with open(STATE_HISTORY_FILE,"w") as f:
-        pass
+    open(STATE_HISTORY_FILE,"w").close()
 
 with open(STATE_HISTORY_FILE,"r") as f:
     state_lines = [l.strip() for l in f.readlines() if l.strip()]
@@ -139,8 +141,7 @@ else:
 if not state_lines or state_lines[-1] != change_entry:
     state_lines.append(change_entry)
 
-if len(state_lines) > 10:
-    state_lines = state_lines[-10:]
+state_lines = state_lines[-10:]
 
 with open(STATE_HISTORY_FILE,"w") as f:
     f.write("\n".join(state_lines) + "\n")
@@ -151,58 +152,29 @@ state_output = "\n".join(f"- {l}" for l in state_lines)
 # Save State
 # -----------------------------
 with open(STATE_FILE,"w") as f:
-    json.dump({
-        "risk_score":risk_score,
-        "stage":current_stage
-    },f,indent=2)
+    json.dump({"risk_score":risk_score,"stage":current_stage},f,indent=2)
 
 # -----------------------------
-# Trend Engine (Day 1 → Day 14, oldest → newest)
+# Trend Engine (14 Days)
 # -----------------------------
-trend_file = f"{ARTIFACT_ROOT}/system/risk_history.log"
+if not os.path.exists(TREND_FILE):
+    open(TREND_FILE,"w").close()
 
-if not os.path.exists(trend_file):
-    open(trend_file, "w").close()
-
-with open(trend_file, "r") as f:
-    trend_lines = [l.strip() for l in f.readlines() if "," in l]
+with open(TREND_FILE,"r") as f:
+    trend_lines = [l.strip() for l in f.readlines() if l.strip()]
 
 timestamp = f"{TODAY}_{random.randint(1000,9999)}"
+trend_lines.append(f"{timestamp},{risk_score},{current_stage},Maintained,🔄 Containment Re-Validation Cycle")
+trend_lines = trend_lines[-14:]
 
-if trend_lines:
-    parts = trend_lines[-1].split(",")
-    if len(parts) >= 3:
-        prev_stage = parts[2]
-    else:
-        prev_stage = current_stage
-else:
-    prev_stage = current_stage
-
-prev_lvl = stage_levels.get(prev_stage, 1)
-curr_lvl = stage_levels[current_stage]
-
-if curr_lvl > prev_lvl:
-    transition = "Escalation"
-elif curr_lvl < prev_lvl:
-    transition = "Containment"
-else:
-    transition = "Maintained"
-
-map_stage = "🔄 Containment Re-Validation Cycle"
-trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition},{map_stage}")
-
-trend_lines = trend_lines[-14:]  # keep last 14 days
-
+# Build trend output (Day 1 → Day 14)
 emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
-
-# -----------------------------
-# Build trend output safely
-# -----------------------------
 trend_output = ""
-for i, line in enumerate(trend_lines, 1):
+for i, line in enumerate(trend_lines,1):
     parts = line.split(",")
+    # Pad missing fields
     while len(parts) < 5:
-        parts.append("🔄 Containment Re-Validation Cycle" if len(parts)==4 else current_stage)
+        parts.append("🔄 Containment Re-Validation Cycle" if len(parts) == 4 else "Maintained")
     ts, score, stage, transition, map_stage = parts[:5]
     emoji = emoji_map.get(stage, "")
     trend_output += f"- Day {i}: {emoji} {stage} | Risk {score} | {transition} | {map_stage} | {ts}\n"
@@ -210,7 +182,7 @@ for i, line in enumerate(trend_lines, 1):
 # -----------------------------
 # Dashboard
 # -----------------------------
-dashboard=f"""
+dashboard = f"""
 <!-- CVX-REPORT-START -->
 
 # 🕵️ CyberVector Containment Command
@@ -233,18 +205,20 @@ dashboard=f"""
 <!-- CVX-REPORT-END -->
 """
 
-with open("README.md") as f:
-    content=f.read()
-
-start="<!-- CVX-REPORT-START-->"
-end="<!-- CVX-REPORT-END-->"
-
-if start in content and end in content:
-    before=content.split(start)[0]
-    after=content.split(end)[1]
-    new_content=before+dashboard+after
+# Update README
+if not os.path.exists("README.md"):
+    with open("README.md","w") as f:
+        f.write(dashboard)
 else:
-    new_content=content+dashboard
-
-with open("README.md","w") as f:
-    f.write(new_content)
+    with open("README.md") as f:
+        content = f.read()
+    start = "<!-- CVX-REPORT-START -->"
+    end = "<!-- CVX-REPORT-END -->"
+    if start in content and end in content:
+        before = content.split(start)[0]
+        after = content.split(end)[1]
+        new_content = before + dashboard + after
+    else:
+        new_content = content + dashboard
+    with open("README.md","w") as f:
+        f.write(new_content)
