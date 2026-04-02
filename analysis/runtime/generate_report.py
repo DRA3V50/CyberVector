@@ -39,7 +39,7 @@ running_services = read_metric(system_file, "Running Services")
 suid_count = read_metric(system_file, "SUID Binaries")
 
 # -----------------------------
-# Campaign Engine
+# Campaign Engine (UNCHANGED)
 # -----------------------------
 CAMPAIGN_FILE = f"{ARTIFACT_ROOT}/threats/campaign_state.json"
 
@@ -115,7 +115,8 @@ current_stage,stage_emoji = determine_stage(risk_score)
 stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
 
 if not os.path.exists(STATE_HISTORY_FILE):
-    open(STATE_HISTORY_FILE,"w").close()
+    with open(STATE_HISTORY_FILE,"w") as f:
+        pass
 
 with open(STATE_HISTORY_FILE,"r") as f:
     state_lines = [l.strip() for l in f.readlines() if l.strip()]
@@ -138,8 +139,11 @@ else:
 if not state_lines or state_lines[-1] != change_entry:
     state_lines.append(change_entry)
 
-if len(state_lines) > 14:
-    state_lines = state_lines[-14:]  # last 14
+if len(state_lines) > 10:
+    state_lines = state_lines[-10:]
+
+with open(STATE_HISTORY_FILE,"w") as f:
+    f.write("\n".join(state_lines) + "\n")
 
 state_output = "\n".join(f"- {l}" for l in state_lines)
 
@@ -153,7 +157,7 @@ with open(STATE_FILE,"w") as f:
     },f,indent=2)
 
 # -----------------------------
-# Trend Engine
+# Trend Engine (Day 1 → Day 14, oldest → newest)
 # -----------------------------
 trend_file = f"{ARTIFACT_ROOT}/system/risk_history.log"
 
@@ -165,7 +169,15 @@ with open(trend_file, "r") as f:
 
 timestamp = f"{TODAY}_{random.randint(1000,9999)}"
 
-prev_stage = trend_lines[-1].split(",")[2] if trend_lines else current_stage
+if trend_lines:
+    parts = trend_lines[-1].split(",")
+    if len(parts) >= 3:
+        prev_stage = parts[2]
+    else:
+        prev_stage = current_stage
+else:
+    prev_stage = current_stage
+
 prev_lvl = stage_levels.get(prev_stage, 1)
 curr_lvl = stage_levels[current_stage]
 
@@ -178,13 +190,20 @@ else:
 
 map_stage = "🔄 Containment Re-Validation Cycle"
 trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition},{map_stage}")
-trend_lines = trend_lines[-14:]  # last 14 days
+
+trend_lines = trend_lines[-14:]  # keep last 14 days
 
 emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
+
+# -----------------------------
+# Build trend output safely
+# -----------------------------
 trend_output = ""
 for i, line in enumerate(trend_lines, 1):
     parts = line.split(",")
-    ts, score, stage, transition, map_stage = parts
+    while len(parts) < 5:
+        parts.append("🔄 Containment Re-Validation Cycle" if len(parts)==4 else current_stage)
+    ts, score, stage, transition, map_stage = parts[:5]
     emoji = emoji_map.get(stage, "")
     trend_output += f"- Day {i}: {emoji} {stage} | Risk {score} | {transition} | {map_stage} | {ts}\n"
 
