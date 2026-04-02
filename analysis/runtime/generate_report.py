@@ -157,7 +157,7 @@ with open(STATE_FILE,"w") as f:
     },f,indent=2)
 
 # -----------------------------
-# Trend Engine
+# Trend Engine with Escalation Narrative
 # -----------------------------
 trend_file = f"{ARTIFACT_ROOT}/system/risk_history.log"
 
@@ -171,14 +171,9 @@ timestamp = f"{TODAY}_{random.randint(1000,9999)}"
 
 if trend_lines:
     parts = trend_lines[-1].split(",")
-    if len(parts) >= 3:
-        prev_stage = parts[2]
-    else:
-        prev_stage = current_stage
+    prev_stage = parts[2] if len(parts) >= 3 else current_stage
 else:
     prev_stage = current_stage
-
-stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
 
 prev_lvl = stage_levels.get(prev_stage, 1)
 curr_lvl = stage_levels[current_stage]
@@ -197,12 +192,28 @@ trend_lines = trend_lines[-14:]
 with open(trend_file, "w") as f:
     f.write("\n".join(trend_lines) + "\n")
 
+# -----------------------------
+# Build Trend Output with Propagation Map
+# -----------------------------
+propagation_map = [
+    "1️⃣ Host Security Posture Evaluation",
+    "2️⃣ Authentication Abuse Analysis",
+    "3️⃣ Exposure Validation",
+    "4️⃣ Patch Intelligence",
+    "5️⃣ Compromise Simulation",
+    "6️⃣ Propagation Modeling",
+    "7️⃣ Lateral Movement Analysis",
+    "8️⃣ Persistence Detection",
+    "9️⃣ Privilege Escalation Review",
+    "🔄 Containment Re-Validation Cycle"
+]
+
 emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
 
-trend_output = ""
+trend_output_lines = []
+
 for i, line in enumerate(trend_lines, 1):
     parts = line.split(",")
-
     if len(parts) >= 4:
         ts, score, stage, transition = parts
     elif len(parts) == 3:
@@ -211,8 +222,28 @@ for i, line in enumerate(trend_lines, 1):
     else:
         continue
 
+    score = float(score)
     emoji = emoji_map.get(stage, "")
-    trend_output += f"- Run {i}: {emoji} {stage} | Risk {score} | {transition}\n"
+    curr_lvl = stage_levels.get(stage, 1)
+
+    # Map stage to propagation step
+    phase_index = min(len(propagation_map)-1, curr_lvl * 2 - 2 + (i % 2))
+    phase_name = propagation_map[phase_index]
+
+    if transition == "Escalation":
+        narrative = f"⬆️ Escalated to {phase_name}"
+    elif transition == "Containment":
+        narrative = f"⬇️ Contained, moved back from {phase_name}"
+    elif stage == "GREEN" and prev_stage != "GREEN":
+        narrative = f"✅ Threat neutralized, host returning to baseline ({phase_name})"
+    else:
+        narrative = f"➡️ Maintained at {phase_name}"
+
+    trend_output_lines.append(
+        f"- Run {i}: {emoji} {stage} | Risk {score}\n  ↳ Status: {narrative}"
+    )
+
+trend_output = "\n".join(trend_output_lines)
 
 # -----------------------------
 # Dashboard
