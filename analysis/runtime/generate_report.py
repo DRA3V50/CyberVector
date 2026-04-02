@@ -110,7 +110,7 @@ def determine_stage(score):
 current_stage,stage_emoji = determine_stage(risk_score)
 
 # -----------------------------
-# STATE CHANGE ENGINE (FIXED 🔥)
+# STATE CHANGE ENGINE
 # -----------------------------
 stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
 
@@ -205,6 +205,11 @@ dashboard=f"""
 
 ## 🔄 Containment State Changes
 {state_output}
+
+---
+
+## 📈 Containment Risk Timeline (14 Runs)
+{trend_output}
 
 <!-- CVX-REPORT-END -->
 """
