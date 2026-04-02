@@ -173,7 +173,25 @@ with open(trend_file, "r") as f:
     trend_lines = [l.strip() for l in f.readlines() if "," in l]
 
 timestamp = f"{TODAY}_{random.randint(1000,9999)}"
-trend_lines.append(f"{timestamp},{risk_score},{current_stage}")
+# Determine transition vs previous entry
+if trend_lines:
+    _, _, prev_stage = trend_lines[-1].split(",")
+else:
+    prev_stage = current_stage
+
+stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
+
+prev_lvl = stage_levels.get(prev_stage, 1)
+curr_lvl = stage_levels[current_stage]
+
+if curr_lvl > prev_lvl:
+    transition = "Escalation"
+elif curr_lvl < prev_lvl:
+    transition = "Containment"
+else:
+    transition = "Maintained"
+
+trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition}")
 
 # KEEP last 14 runs (THIS is what you lost)
 trend_lines = trend_lines[-14:]
@@ -185,8 +203,25 @@ emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
 
 trend_output = ""
 for i, line in enumerate(trend_lines, 1):
-    d,s,st = line.split(",")
-    trend_output += f"- Day {i} | {d.split('_')[0]} | {emoji_map[st]} {s} ({st})\n"
+    # Determine transition vs previous entry
+if trend_lines:
+    _, _, prev_stage = trend_lines[-1].split(",")
+else:
+    prev_stage = current_stage
+
+stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
+
+prev_lvl = stage_levels.get(prev_stage, 1)
+curr_lvl = stage_levels[current_stage]
+
+if curr_lvl > prev_lvl:
+    transition = "Escalation"
+elif curr_lvl < prev_lvl:
+    transition = "Containment"
+else:
+    transition = "Maintained"
+
+trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition}")
 
 # -----------------------------
 # Dashboard
