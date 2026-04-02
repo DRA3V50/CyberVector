@@ -155,29 +155,58 @@ with open(STATE_FILE,"w") as f:
     json.dump({"risk_score":risk_score,"stage":current_stage},f,indent=2)
 
 # -----------------------------
-# Trend Engine (14 Days)
+# Trend Engine (FIXED)
 # -----------------------------
-if not os.path.exists(TREND_FILE):
-    open(TREND_FILE,"w").close()
+trend_file = f"{ARTIFACT_ROOT}/system/risk_history.log"
+if not os.path.exists(trend_file):
+    open(trend_file, "w").close()
 
-with open(TREND_FILE,"r") as f:
+with open(trend_file, "r") as f:
     trend_lines = [l.strip() for l in f.readlines() if l.strip()]
 
 timestamp = f"{TODAY}_{random.randint(1000,9999)}"
-trend_lines.append(f"{timestamp},{risk_score},{current_stage},Maintained,🔄 Containment Re-Validation Cycle")
+
+# Determine transition vs previous entry
+if trend_lines:
+    _, prev_risk, prev_stage, *_ = trend_lines[-1].split(",")
+else:
+    prev_stage = current_stage
+
+stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
+prev_lvl = stage_levels.get(prev_stage, 1)
+curr_lvl = stage_levels[current_stage]
+
+if curr_lvl > prev_lvl:
+    transition = "Escalation"
+elif curr_lvl < prev_lvl:
+    transition = "Containment"
+else:
+    transition = "Maintained"
+
+# Optional: map_stage for 5-field format
+stage_map = {
+    "GREEN":"1️⃣ Host Security Posture Evaluation",
+    "YELLOW":"2️⃣ Authentication Abuse Analysis",
+    "ORANGE":"5️⃣ Compromise Simulation",
+    "RED":"9️⃣ Privilege Escalation Review"
+}
+map_stage = stage_map.get(current_stage, "")
+
+# Append new entry
+trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition},{map_stage}")
+
+# Keep last 14 runs
 trend_lines = trend_lines[-14:]
 
-# Build trend output (Day 1 → Day 14)
+with open(trend_file, "w") as f:
+    f.write("\n".join(trend_lines) + "\n")
+
+# Build trend_output string
 emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
 trend_output = ""
-for i, line in enumerate(trend_lines,1):
-    parts = line.split(",")
-    # Pad missing fields
-    while len(parts) < 5:
-        parts.append("🔄 Containment Re-Validation Cycle" if len(parts) == 4 else "Maintained")
-    ts, score, stage, transition, map_stage = parts[:5]
-    emoji = emoji_map.get(stage, "")
-    trend_output += f"- Day {i}: {emoji} {stage} | Risk {score} | {transition} | {map_stage} | {ts}\n"
+for i, line in enumerate(trend_lines, 1):
+    ts, score, stage, transition, map_stage = line.split(",")
+    trend_output += f"Day {i}: {emoji_map.get(stage,stage)} {stage} | Risk {score} | {transition} | {map_stage} | {ts}\n"
 
 # -----------------------------
 # Dashboard
