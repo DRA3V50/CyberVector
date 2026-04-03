@@ -108,11 +108,12 @@ def determine_stage(score):
         return "RED","🔴"
 
 current_stage,stage_emoji = determine_stage(risk_score)
-stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
 
 # -----------------------------
 # STATE CHANGE ENGINE
 # -----------------------------
+stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
+
 if not os.path.exists(STATE_HISTORY_FILE):
     with open(STATE_HISTORY_FILE,"w") as f:
         pass
@@ -156,30 +157,25 @@ with open(STATE_FILE,"w") as f:
     },f,indent=2)
 
 # -----------------------------
-# Trend Engine with Narrative (FIXED)
+# Trend Engine with Escalation Narrative
 # -----------------------------
 trend_file = f"{ARTIFACT_ROOT}/system/risk_history.log"
+
 if not os.path.exists(trend_file):
-    open(trend_file,"w").close()
+    open(trend_file, "w").close()
 
 with open(trend_file, "r") as f:
-    trend_lines = [l.strip() for l in f.readlines() if l.strip()]
+    trend_lines = [l.strip() for l in f.readlines() if "," in l]
 
-# Normalize all lines to 5 fields
-normalized_lines = []
-for line in trend_lines:
-    parts = line.split(",")
-    while len(parts) < 5:
-        if len(parts) == 3:
-            parts += ["Maintained",""]
-        elif len(parts) == 4:
-            parts += [""]
-    normalized_lines.append(",".join(parts))
-trend_lines = normalized_lines
-
-# Add today's run
 timestamp = f"{TODAY}_{random.randint(1000,9999)}"
-prev_stage = trend_lines[-1].split(",")[2] if trend_lines else current_stage
+
+# Determine previous stage for transition
+if trend_lines:
+    parts = trend_lines[-1].split(",")
+    prev_stage = parts[2] if len(parts) >= 3 else current_stage
+else:
+    prev_stage = current_stage
+
 prev_lvl = stage_levels.get(prev_stage, 1)
 curr_lvl = stage_levels[current_stage]
 
@@ -190,14 +186,7 @@ elif curr_lvl < prev_lvl:
 else:
     transition = "Maintained"
 
-map_stage = stage_emoji
-trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition},{map_stage}")
-trend_lines = trend_lines[-14:]
-
-with open(trend_file, "w") as f:
-    f.write("\n".join(trend_lines) + "\n")
-
-# Build trend output with narrative only for latest run
+# Always append trend line with 5 fields: timestamp,risk_score,stage,transition,map_stage
 propagation_map = [
     "1️⃣ Host Security Posture Evaluation",
     "2️⃣ Authentication Abuse Analysis",
@@ -210,30 +199,41 @@ propagation_map = [
     "9️⃣ Privilege Escalation Review",
     "🔄 Containment Re-Validation Cycle"
 ]
+map_stage = propagation_map[min(curr_lvl*2-2, len(propagation_map)-1)]
+trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition},{map_stage}")
+trend_lines = trend_lines[-14:]
 
+with open(trend_file, "w") as f:
+    f.write("\n".join(trend_lines) + "\n")
+
+# -----------------------------
+# Build Trend Output for Dashboard
+# -----------------------------
 emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
 trend_output_lines = []
 
 for i, line in enumerate(trend_lines, 1):
-    ts, score, stage, transition, map_stage = line.split(",")
+    parts = line.strip().split(",")
+    if len(parts) < 5:
+        continue
+    ts, score, stage, transition, map_stage = parts
     score = float(score)
     emoji = emoji_map.get(stage, "")
-    curr_lvl = stage_levels.get(stage, 1)
-    phase_index = min(len(propagation_map)-1, curr_lvl * 2 - 2 + (i % 2))
-    phase_name = propagation_map[phase_index]
-
-    if i == len(trend_lines):  # Only latest run gets narrative
+    if i == len(trend_lines):
         if transition == "Escalation":
-            narrative = f"⬆️ Escalated to {phase_name}"
+            narrative = f"⬆️ Escalated to {map_stage}"
         elif transition == "Containment":
-            narrative = f"⬇️ Contained, moved back from {phase_name}"
-        elif stage == "GREEN" and prev_stage != "GREEN":
-            narrative = f"✅ Threat neutralized, host returning to baseline ({phase_name})"
+            narrative = f"⬇️ Contained, moved back from {map_stage}"
+        elif stage == "GREEN":
+            narrative = f"✅ Threat neutralized, host returning to baseline ({map_stage})"
         else:
-            narrative = f"➡️ Maintained at {phase_name}"
-        trend_output_lines.append(f"- Run {i}: {emoji} {stage} | Risk {score}\n  ↳ Status: {narrative}")
+            narrative = f"➡️ Maintained at {map_stage}"
     else:
-        trend_output_lines.append(f"- Run {i}: {emoji} {stage} | Risk {score} | {transition}")
+        narrative = ""
+    trend_output_lines.append(
+        f"- Run {i}: {emoji} {stage} | Risk {score} | {transition}" +
+        (f"\n  ↳ Status: {narrative}" if narrative else "")
+    )
 
 trend_output = "\n".join(trend_output_lines)
 
@@ -263,18 +263,20 @@ dashboard=f"""
 <!-- CVX-REPORT-END -->
 """
 
-with open("README.md") as f:
-    content=f.read()
+# Write dashboard to README.md (overwrite previous report)
+readme_file = "README.md"
+with open(readme_file, "r") as f:
+    content = f.read()
 
-start="<!-- CVX-REPORT-START-->"
-end="<!-- CVX-REPORT-END-->"
+start_marker = "<!-- CVX-REPORT-START-->"
+end_marker = "<!-- CVX-REPORT-END-->"
 
-if start in content and end in content:
-    before=content.split(start)[0]
-    after=content.split(end)[1]
-    new_content=before+dashboard+after
+if start_marker in content and end_marker in content:
+    before = content.split(start_marker)[0]
+    after = content.split(end_marker)[1]
+    new_content = before + dashboard + after
 else:
-    new_content=content+dashboard
+    new_content = content + "\n" + dashboard
 
-with open("README.md","w") as f:
+with open(readme_file, "w") as f:
     f.write(new_content)
