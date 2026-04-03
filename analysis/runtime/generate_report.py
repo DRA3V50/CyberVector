@@ -10,11 +10,6 @@ ARTIFACT_ROOT = "artifacts"
 STATE_FILE = f"{ARTIFACT_ROOT}/system/state.json"
 STATE_HISTORY_FILE = f"{ARTIFACT_ROOT}/system/state_changes.log"
 
-INCIDENT_DIR = f"{ARTIFACT_ROOT}/incidents"
-THREAT_DIR = f"{ARTIFACT_ROOT}/threats"
-
-os.makedirs(INCIDENT_DIR, exist_ok=True)
-os.makedirs(THREAT_DIR, exist_ok=True)
 os.makedirs(f"{ARTIFACT_ROOT}/system", exist_ok=True)
 
 # -----------------------------
@@ -37,44 +32,6 @@ failed_ssh = read_metric(auth_file, "Failed SSH Attempts")
 listening_ports = read_metric(network_file, "Listening Ports")
 running_services = read_metric(system_file, "Running Services")
 suid_count = read_metric(system_file, "SUID Binaries")
-
-# -----------------------------
-# Campaign Engine
-# -----------------------------
-CAMPAIGN_FILE = f"{ARTIFACT_ROOT}/threats/campaign_state.json"
-
-if os.path.exists(CAMPAIGN_FILE):
-    with open(CAMPAIGN_FILE) as f:
-        campaign_data = json.load(f)
-else:
-    campaign_data = {"active_campaign": None, "duration": 0}
-
-campaign = campaign_data["active_campaign"]
-duration = campaign_data["duration"]
-
-if campaign is None:
-    if random.randint(1,100) > 85:
-        campaign = random.choice(["BRUTE_FORCE","LATERAL_MOVEMENT","PERSISTENCE","PRIV_ESC"])
-        duration = random.randint(2,5)
-else:
-    duration -= 1
-    if duration <= 0:
-        campaign = None
-
-campaign_data["active_campaign"] = campaign
-campaign_data["duration"] = duration
-
-with open(CAMPAIGN_FILE,"w") as f:
-    json.dump(campaign_data,f,indent=2)
-
-if campaign == "BRUTE_FORCE":
-    failed_ssh += random.randint(25,80)
-elif campaign == "LATERAL_MOVEMENT":
-    listening_ports += random.randint(5,15)
-elif campaign == "PERSISTENCE":
-    running_services += random.randint(10,30)
-elif campaign == "PRIV_ESC":
-    suid_count += random.randint(5,15)
 
 # -----------------------------
 # Risk Engine
@@ -115,8 +72,7 @@ current_stage,stage_emoji = determine_stage(risk_score)
 stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
 
 if not os.path.exists(STATE_HISTORY_FILE):
-    with open(STATE_HISTORY_FILE,"w") as f:
-        pass
+    open(STATE_HISTORY_FILE,"w").close()
 
 with open(STATE_HISTORY_FILE,"r") as f:
     state_lines = [l.strip() for l in f.readlines() if l.strip()]
@@ -131,16 +87,15 @@ if previous_stage:
         change_type = "Containment"
     else:
         change_type = "Maintained"
-
-    change_entry = f"{TODAY} | {stage_emoji} {current_stage} ({change_type})"
 else:
-    change_entry = f"{TODAY} | {stage_emoji} {current_stage} (Initial State)"
+    change_type = "Initial State"
+
+change_entry = f"{TODAY} | {stage_emoji} {current_stage} ({change_type})"
 
 if not state_lines or state_lines[-1] != change_entry:
     state_lines.append(change_entry)
 
-if len(state_lines) > 10:
-    state_lines = state_lines[-10:]
+state_lines = state_lines[-10:]
 
 with open(STATE_HISTORY_FILE,"w") as f:
     f.write("\n".join(state_lines) + "\n")
@@ -148,16 +103,7 @@ with open(STATE_HISTORY_FILE,"w") as f:
 state_output = "\n".join(f"- {l}" for l in state_lines)
 
 # -----------------------------
-# Save State
-# -----------------------------
-with open(STATE_FILE,"w") as f:
-    json.dump({
-        "risk_score":risk_score,
-        "stage":current_stage
-    },f,indent=2)
-
-# -----------------------------
-# Trend Engine with Escalation Narrative
+# TREND ENGINE (FIXED)
 # -----------------------------
 trend_file = f"{ARTIFACT_ROOT}/system/risk_history.log"
 
@@ -169,14 +115,14 @@ with open(trend_file, "r") as f:
 
 timestamp = f"{TODAY}_{random.randint(1000,9999)}"
 
-# Determine previous stage for transition
+# Determine transition vs previous
 if trend_lines:
-    parts = trend_lines[-1].split(",")
-    prev_stage = parts[2] if len(parts) >= 3 else current_stage
+    last_parts = trend_lines[-1].split(",")
+    prev_stage_trend = last_parts[2]
 else:
-    prev_stage = current_stage
+    prev_stage_trend = current_stage
 
-prev_lvl = stage_levels.get(prev_stage, 1)
+prev_lvl = stage_levels.get(prev_stage_trend, 1)
 curr_lvl = stage_levels[current_stage]
 
 if curr_lvl > prev_lvl:
@@ -186,59 +132,41 @@ elif curr_lvl < prev_lvl:
 else:
     transition = "Maintained"
 
-# Always append trend line with 5 fields: timestamp,risk_score,stage,transition,map_stage
-propagation_map = [
-    "1️⃣ Host Security Posture Evaluation",
-    "2️⃣ Authentication Abuse Analysis",
-    "3️⃣ Exposure Validation",
-    "4️⃣ Patch Intelligence",
-    "5️⃣ Compromise Simulation",
-    "6️⃣ Propagation Modeling",
-    "7️⃣ Lateral Movement Analysis",
-    "8️⃣ Persistence Detection",
-    "9️⃣ Privilege Escalation Review",
-    "🔄 Containment Re-Validation Cycle"
-]
-map_stage = propagation_map[min(curr_lvl*2-2, len(propagation_map)-1)]
-trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition},{map_stage}")
+trend_lines.append(f"{timestamp},{risk_score},{current_stage},{transition}")
+
 trend_lines = trend_lines[-14:]
 
 with open(trend_file, "w") as f:
     f.write("\n".join(trend_lines) + "\n")
 
-# -----------------------------
-# Build Trend Output for Dashboard
-# -----------------------------
 emoji_map = {"GREEN":"🟢","YELLOW":"🟡","ORANGE":"🟠","RED":"🔴"}
-trend_output_lines = []
+
+trend_output = ""
 
 for i, line in enumerate(trend_lines, 1):
-    parts = line.strip().split(",")
-    if len(parts) < 5:
-        continue
-    ts, score, stage, transition, map_stage = parts
-    score = float(score)
-    emoji = emoji_map.get(stage, "")
-    if i == len(trend_lines):
-        if transition == "Escalation":
-            narrative = f"⬆️ Escalated to {map_stage}"
-        elif transition == "Containment":
-            narrative = f"⬇️ Contained, moved back from {map_stage}"
-        elif stage == "GREEN":
-            narrative = f"✅ Threat neutralized, host returning to baseline ({map_stage})"
-        else:
-            narrative = f"➡️ Maintained at {map_stage}"
-    else:
-        narrative = ""
-    trend_output_lines.append(
-        f"- Run {i}: {emoji} {stage} | Risk {score} | {transition}" +
-        (f"\n  ↳ Status: {narrative}" if narrative else "")
+    parts = line.split(",")
+
+    d = parts[0]
+    s = parts[1]
+    st = parts[2]
+    transition = parts[3] if len(parts) > 3 else "Maintained"
+
+    trend_output += (
+        f"- Day {i} | {d.split('_')[0]} | "
+        f"{emoji_map[st]} {s} ({st} → {transition})\n"
     )
 
-trend_output = "\n".join(trend_output_lines)
+# -----------------------------
+# SAVE STATE
+# -----------------------------
+with open(STATE_FILE,"w") as f:
+    json.dump({
+        "risk_score":risk_score,
+        "stage":current_stage
+    },f,indent=2)
 
 # -----------------------------
-# Dashboard
+# DASHBOARD
 # -----------------------------
 dashboard=f"""
 <!-- CVX-REPORT-START -->
@@ -263,20 +191,18 @@ dashboard=f"""
 <!-- CVX-REPORT-END -->
 """
 
-# Write dashboard to README.md (overwrite previous report)
-readme_file = "README.md"
-with open(readme_file, "r") as f:
-    content = f.read()
+with open("README.md") as f:
+    content=f.read()
 
-start_marker = "<!-- CVX-REPORT-START-->"
-end_marker = "<!-- CVX-REPORT-END-->"
+start="<!-- CVX-REPORT-START -->"
+end="<!-- CVX-REPORT-END -->"
 
-if start_marker in content and end_marker in content:
-    before = content.split(start_marker)[0]
-    after = content.split(end_marker)[1]
-    new_content = before + dashboard + after
+if start in content and end in content:
+    before=content.split(start)[0]
+    after=content.split(end)[1]
+    new_content=before+dashboard+after
 else:
-    new_content = content + "\n" + dashboard
+    new_content=content+dashboard
 
-with open(readme_file, "w") as f:
+with open("README.md","w") as f:
     f.write(new_content)
