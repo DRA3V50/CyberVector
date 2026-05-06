@@ -361,5 +361,4 @@ All research activities are conducted in accordance with responsible cybersecuri
 • Calculates dynamic risk scoring  
 • Updates a rolling 14-run containment timeline  
 • Writes results directly into this README  
-
 CyberVector is not a static dashboard — it is a **living containment system**.
