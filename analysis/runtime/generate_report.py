@@ -25,29 +25,70 @@ def determine_stage(score):
     else:
         return "RED","🔴"
 
-stage_levels = {"GREEN":1,"YELLOW":2,"ORANGE":3,"RED":4}
+stage_levels = {
+    "GREEN": 1,
+    "YELLOW": 2,
+    "ORANGE": 3,
+    "RED": 4
+}
 
 # -----------------------------
 # Load Previous State
 # -----------------------------
-previous_risk = 0
-previous_stage = None
+previous_risk = 50
+previous_stage = "YELLOW"
 
 if os.path.exists(STATE_FILE):
     with open(STATE_FILE) as f:
         data = json.load(f)
-        previous_risk = data.get("risk_score", 0)
-        previous_stage = data.get("stage", None)
+        previous_risk = data.get("risk_score", 50)
+        previous_stage = data.get("stage", "YELLOW")
 
 # -----------------------------
-# Simulated Risk (keep yours)
+# BALANCED RISK ENGINE
 # -----------------------------
-risk_score = max(0, round(previous_risk * 0.7 + random.randint(10,60),1))
+# More natural fluctuations:
+# GREEN possible
+# YELLOW common
+# ORANGE occasional
+# RED rare but possible
+
+event_roll = random.randint(1, 100)
+
+if event_roll <= 55:
+    # Stable / healthier period
+    delta = random.randint(-35, 10)
+
+elif event_roll <= 85:
+    # Moderate activity
+    delta = random.randint(-10, 25)
+
+elif event_roll <= 97:
+    # Escalation window
+    delta = random.randint(20, 55)
+
+else:
+    # Rare critical spike
+    delta = random.randint(60, 120)
+
+# smoother carry-over from previous score
+risk_score = round((previous_risk * 0.72) + delta, 1)
+
+# prevent impossible negatives
+risk_score = max(0, risk_score)
+
+# occasional automatic recovery drops
+if random.randint(1, 100) <= 18:
+    recovery = random.randint(15, 45)
+    risk_score = max(0, round(risk_score - recovery, 1))
+
+# hard cap
+risk_score = min(risk_score, 320)
 
 current_stage, stage_emoji = determine_stage(risk_score)
 
 # -----------------------------
-# Status + Phase Logic
+# Status Logic
 # -----------------------------
 if previous_stage:
     prev = stage_levels[previous_stage]
@@ -55,87 +96,106 @@ if previous_stage:
 
     if curr > prev:
         status = "ESCALATED"
+
     elif curr < prev:
         status = "CONTAINED"
+
     else:
         status = "MAINTAINED"
+
 else:
     status = "INITIAL"
 
-# Phase mapping (SMART LOGIC)
+# -----------------------------
+# Phase Mapping
+# -----------------------------
 if current_stage == "RED":
-    phase = random.randint(6,9)
+    phase = random.randint(7, 9)
+
 elif current_stage == "ORANGE":
-    phase = random.randint(5,7)
+    phase = random.randint(5, 7)
+
 elif current_stage == "YELLOW":
-    phase = random.randint(3,5)
+    phase = random.randint(3, 5)
+
 else:
-    phase = random.randint(1,3)
+    phase = random.randint(1, 3)
 
 phase_map = {
-    1:"Host Security Posture Evaluation",
-    2:"Authentication Abuse Analysis",
-    3:"Exposure Validation",
-    4:"Patch Intelligence",
-    5:"Compromise Simulation",
-    6:"Propagation Modeling",
-    7:"Lateral Movement Analysis",
-    8:"Persistence Detection",
-    9:"Privilege Escalation Review"
+    1: "Host Security Posture Evaluation",
+    2: "Authentication Abuse Analysis",
+    3: "Exposure Validation",
+    4: "Patch Intelligence",
+    5: "Compromise Simulation",
+    6: "Propagation Modeling",
+    7: "Lateral Movement Analysis",
+    8: "Persistence Detection",
+    9: "Privilege Escalation Review"
 }
 
 # -----------------------------
-# TREND ENGINE (FIXED)
+# Trend Engine
 # -----------------------------
 if not os.path.exists(TREND_FILE):
-    open(TREND_FILE,"w").close()
+    open(TREND_FILE, "w").close()
 
-with open(TREND_FILE,"r") as f:
+with open(TREND_FILE, "r") as f:
     lines = [l.strip() for l in f.readlines() if l.strip()]
 
-# ADD NEW ENTRY (NEW FORMAT)
+# New entry format
 timestamp = f"{TODAY}_{random.randint(1000,9999)}"
-new_entry = f"{timestamp},{risk_score},{current_stage},{status},{phase}"
+
+new_entry = (
+    f"{timestamp},"
+    f"{risk_score},"
+    f"{current_stage},"
+    f"{status},"
+    f"{phase}"
+)
+
 lines.append(new_entry)
 
-# KEEP LAST 14
+# Keep last 14
 lines = lines[-14:]
 
-with open(TREND_FILE,"w") as f:
+with open(TREND_FILE, "w") as f:
     f.write("\n".join(lines) + "\n")
 
 # -----------------------------
-# BUILD DISPLAY (BACKWARD SAFE)
+# Build Timeline Output
 # -----------------------------
 trend_output = ""
 
-for i, line in enumerate(lines,1):
+for i, line in enumerate(lines, 1):
+
     parts = line.split(",")
 
     try:
-        # NEW FORMAT
+        # New format
         if len(parts) >= 5:
             d, s, st, stat, ph = parts[:5]
 
-        # OLD FORMAT (fallback)
+        # Old format fallback
         else:
             d, s, st = parts[:3]
             stat = "UNKNOWN"
             ph = "?"
 
         emoji = determine_stage(float(s))[1]
+
         date_clean = d.split("_")[0]
 
-        # Safe phase handling
         try:
             ph_int = int(ph)
-            phase_name = phase_map.get(ph_int,"Unknown")
+            phase_name = phase_map.get(ph_int, "Unknown")
+
         except:
             ph_int = "?"
             phase_name = "Unknown"
 
         trend_output += (
-            f"- Day {i} | {date_clean} | {emoji} {s} "
+            f"- Day {i} | {date_clean} | "
+            f"{emoji} {s} "
             f"(→ {stat})\n"
             f"  ↳ Phase {ph_int}: {phase_name}\n"
         )
@@ -144,18 +204,18 @@ for i, line in enumerate(lines,1):
         continue
 
 # -----------------------------
-# SAVE STATE
+# Save State
 # -----------------------------
-with open(STATE_FILE,"w") as f:
+with open(STATE_FILE, "w") as f:
     json.dump({
-        "risk_score":risk_score,
-        "stage":current_stage
-    },f,indent=2)
+        "risk_score": risk_score,
+        "stage": current_stage
+    }, f, indent=2)
 
 # -----------------------------
-# DASHBOARD
+# Dashboard
 # -----------------------------
-dashboard=f"""
+dashboard = f"""
 <!-- CVX-REPORT-START -->
 
 # 🕵️ CyberVector Containment Command
@@ -174,17 +234,17 @@ dashboard=f"""
 """
 
 with open("README.md") as f:
-    content=f.read()
+    content = f.read()
 
-start="<!-- CVX-REPORT-START -->"
-end="<!-- CVX-REPORT-END -->"
+start = "<!-- CVX-REPORT-START -->"
+end = "<!-- CVX-REPORT-END -->"
 
 if start in content and end in content:
-    before=content.split(start)[0]
-    after=content.split(end)[1]
-    new_content=before+dashboard+after
+    before = content.split(start)[0]
+    after = content.split(end)[1]
+    new_content = before + dashboard + after
 else:
-    new_content=content+dashboard
+    new_content = content + dashboard
 
-with open("README.md","w") as f:
+with open("README.md", "w") as f:
     f.write(new_content)
